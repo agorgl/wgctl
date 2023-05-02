@@ -1,6 +1,7 @@
 (ns build
   (:refer-clojure :exclude [test])
-  (:require [clojure.tools.build.api :as b]))
+  (:require [clojure.java.io :as io]
+            [clojure.tools.build.api :as b]))
 
 (def lib 'net.clojars.agorgl/wgctl)
 (def version "0.1.0-SNAPSHOT")
@@ -40,3 +41,21 @@
 (defn ci "Run the CI pipeline of tests (and build the uberjar)." [opts]
   (test opts)
   (uber opts))
+
+(defn native "Build the native binary." [opts]
+  (uber opts)
+  (println "Building native binary...")
+  (if-let [graal-home (System/getenv "GRAALVM_HOME")]
+    (let [jar (:uber-file (uber-opts opts))
+          binary (format "target/%s-%s" lib version)
+          command [(str (io/file graal-home "bin" "native-image"))
+                   "-jar" jar
+                   binary
+                   "-H:+ReportExceptionStackTraces"
+                   "-J-Dclojure.compiler.direct-linking=true"
+                   "-J-Dclojure.spec.skip-macros=true"
+                   "--no-fallback"
+                   "--static"
+                   "--verbose"]]
+      (b/process {:command-args command}))
+    (throw (ex-info "Environment variable GRAALVM_HOME is not set" {}))))
