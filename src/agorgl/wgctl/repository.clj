@@ -8,8 +8,8 @@
   (->> wg/config-dir
        io/file
        file-seq
-       (filter #(.isFile %))
-       (mapv #(.getName %))
+       (filter #(.isFile ^java.io.File %))
+       (mapv #(.getName ^java.io.File %))
        (filter #(re-matches #".*\.json$" %))
        (mapv #(str/replace % #"\.json$" ""))))
 
