@@ -40,7 +40,8 @@
                    :alias "h"}]
            :cmds [{:name "add"
                    :desc "Add peer"
-                   :args [{:name "name"}]}
+                   :args [{:name "name"}
+                          {:name "public-key"}]}
                   {:name "ls"
                    :desc "List peers"}
                   {:name "rm"

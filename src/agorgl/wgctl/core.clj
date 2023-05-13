@@ -28,7 +28,7 @@
       ["network" "create"] [:network-create (:name arguments) (:addresses arguments) options]
       ["network" "ls"] [:network-list options]
       ["network" "rm"] [:network-remove (:name arguments) options]
-      ["peer" "add"] [:peer-add (:name arguments) options]
+      ["peer" "add"] [:peer-add (:name arguments) (:public-key arguments) options]
       ["peer" "ls"] [:peer-list options]
       ["peer" "rm"] [:peer-remove (:name arguments) options])))
 
