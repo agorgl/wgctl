@@ -1,7 +1,8 @@
 {:paths ["src" "resources"]
  :deps {org.clojure/clojure {:mvn/version "1.11.1"}
         com.github.clj-easy/graal-build-time {:mvn/version "0.1.4"}
-        org.clojure/tools.cli {:mvn/version "1.0.214"}}
+        org.clojure/tools.cli {:mvn/version "1.0.214"}
+        org.clojure/spec.alpha {:mvn/version "0.3.218"}}
  :aliases
  {:run-m {:main-opts ["-m" "agorgl.wgctl.core"]}
   :run-x {:ns-default agorgl.wgctl.core
