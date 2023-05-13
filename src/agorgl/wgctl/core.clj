@@ -1,6 +1,7 @@
 (ns agorgl.wgctl.core
   (:gen-class)
-  (:require [agorgl.wgctl.cli :as cli]))
+  (:require [agorgl.wgctl.cli :as cli]
+            [agorgl.wgctl.command :as cmd]))
 
 (defn greet
   "Callable entry point to the application."
@@ -32,7 +33,14 @@
       ["peer" "rm"] [:peer-remove (:name arguments) options])))
 
 (defn dispatch [args]
-  (prn args))
+  (-> (case (first args)
+        :network-create cmd/network-create
+        :network-list cmd/network-list
+        :network-remove cmd/network-remove
+        :peer-add cmd/peer-add
+        :peer-list cmd/peer-list
+        :peer-remove cmd/peer-remove)
+      (apply (rest args))))
 
 (defn -main [& args]
   (let [args (cli/parse-args cli/spec (concat ["wgctl"] args))]
