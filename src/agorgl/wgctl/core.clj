@@ -46,4 +46,5 @@
   (let [args (cli/parse-args cli/spec (concat ["wgctl"] args))]
     (check-help args)
     (check-error args)
-    (dispatch (dispatch-array args))))
+    (dispatch (dispatch-array args)))
+  (shutdown-agents))
