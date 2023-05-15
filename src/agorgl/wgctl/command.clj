@@ -60,8 +60,17 @@
         occupied (map :address (:peers network))]
     (net/next-available-ip addresses occupied)))
 
+(defn pick-network [name]
+  (let [name (or name (let [v (r/network-list)]
+                        (when (= (count v) 1)
+                          (first v))))]
+    (if (some? name)
+      name
+      (let [msg (format "Network was not specified")]
+        (throw (ex-info msg {}))))))
+
 (defn peer-add [peer-name public-key options]
-  (let [network (load-network (:network options))
+  (let [network (load-network (pick-network (:network options)))
         address (next-network-address network)
         peer (d/make-peer peer-name public-key address)]
     (-> network
@@ -69,18 +78,18 @@
         save-network)))
 
 (defn peer-set [peer-name property value options]
-  (let [network (load-network (:network options))]
+  (let [network (load-network (pick-network (:network options)))]
     (-> network
         (d/set-peer peer-name property value)
         save-network)))
 
 (defn peer-list [options]
-  (let [network (load-network (:network options))
+  (let [network (load-network (pick-network (:network options)))
         peer-names (d/list-peers network)]
     (println (str/join "\n" peer-names))))
 
 (defn peer-remove [peer-name options]
-  (let [network (load-network (:network options))]
+  (let [network (load-network (pick-network (:network options)))]
     (-> network
         (d/remove-peer peer-name)
         save-network)))
