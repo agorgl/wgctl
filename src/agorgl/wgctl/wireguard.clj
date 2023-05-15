@@ -2,8 +2,6 @@
   (:require [clojure.string :as str]
             [clojure.java.shell :refer [sh]]))
 
-(def config-dir (or (System/getenv "WIREGUARD_DIR") "/etc/wireguard"))
-
 (def interface-keys
   (array-map
    :private-key "PrivateKey"
@@ -42,6 +40,9 @@
        (map (fn [[k v]] [(k peer-keys) v]))
        (into {})
        (ini-section "Peer")))
+
+(defn config-dir []
+  (or (System/getenv "WIREGUARD_DIR") "/etc/wireguard"))
 
 (defn config-file [entries]
   (let [interface-section (interface-section (first entries))

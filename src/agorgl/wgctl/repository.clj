@@ -5,7 +5,7 @@
             [agorgl.wgctl.wireguard :as wg]))
 
 (defn network-list []
-  (->> wg/config-dir
+  (->> (wg/config-dir)
        io/file
        file-seq
        (filter #(.isFile ^java.io.File %))
@@ -14,7 +14,7 @@
        (mapv #(str/replace % #"\.json$" ""))))
 
 (defn network-file [name]
-  (str wg/config-dir "/" name ".json"))
+  (str (wg/config-dir) "/" name ".json"))
 
 (defn network-exists [name]
   (let [file (network-file name)]
@@ -38,7 +38,7 @@
     (io/delete-file file)))
 
 (defn config-file [name]
-  (str wg/config-dir "/" name ".conf"))
+  (str (wg/config-dir) "/" name ".conf"))
 
 (defn config-save [name config]
   (let [file (config-file name)]
