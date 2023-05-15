@@ -77,10 +77,16 @@
         (d/add-peer peer)
         save-network)))
 
+(defn peer-get [peer-name property options]
+  (let [network (load-network (pick-network (:network options)))
+        prop (d/get-peer-prop network peer-name property)]
+    (when (some? prop)
+      (println prop))))
+
 (defn peer-set [peer-name property value options]
   (let [network (load-network (pick-network (:network options)))]
     (-> network
-        (d/set-peer peer-name property value)
+        (d/set-peer-prop peer-name property value)
         save-network)))
 
 (defn peer-list [options]

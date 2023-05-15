@@ -8,7 +8,8 @@
                                          make-self-peer
                                          make-network
                                          add-peer
-                                         set-peer
+                                         get-peer-prop
+                                         set-peer-prop
                                          list-peers
                                          remove-peer]]))
 
@@ -43,14 +44,20 @@
       (is (= 2 (count (:peers (add-peer network peer)))))
       (is (thrown? Exception (add-peer (add-peer network peer) peer)))))
 
+  (testing "gets peer property"
+    (let [self-peer (make-self-peer "<privkey>" "<pubkey>" "10.0.0.1")
+          network (make-network "network" "10.0.0.0/24" self-peer)]
+      (is (= (get-peer-prop network "self" "address") "10.0.0.1"))
+      (is (= (get-peer-prop network "self" "endpoint") nil))))
+
   (testing "sets peer property"
     (let [self-peer (make-self-peer "<privkey>" "<pubkey>" "10.0.0.1")
           network (make-network "network" "10.0.0.0/24" self-peer)]
-      (is (= (get-in (set-peer network "self" "endpoint" "somehost:51820") [:peers 0 :endpoint] ) "somehost:51820"))
-      (is (thrown? Exception (set-peer network "self" "name" "otherself")))
-      (is (thrown? Exception (set-peer network "self" "public-key" 12345)))
-      (is (thrown? Exception (set-peer network "self" "public-key" nil)))
-      (is (thrown? Exception (set-peer network "self" "fafoufa" "fafafa")))))
+      (is (= (get-in (set-peer-prop network "self" "endpoint" "somehost:51820") [:peers 0 :endpoint] ) "somehost:51820"))
+      (is (thrown? Exception (set-peer-prop network "self" "name" "otherself")))
+      (is (thrown? Exception (set-peer-prop network "self" "public-key" 12345)))
+      (is (thrown? Exception (set-peer-prop network "self" "public-key" nil)))
+      (is (thrown? Exception (set-peer-prop network "self" "fafoufa" "fafafa")))))
 
   (testing "lists network peers"
     (let [self-peer (make-self-peer "<privkey>" "<pubkey>" "10.0.0.1")

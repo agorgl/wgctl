@@ -111,16 +111,25 @@
                       (:name network))]
       (throw (ex-info msg {})))))
 
-(defn set-peer [network peer-name property value]
+(defn get-peer-prop [network peer-name property]
+  (if-let [peer-index (find-peer network peer-name)]
+    (let [peer (get-in network [:peers peer-index])]
+      ((keyword property) peer))
+    (let [msg (format "Peer with name '%s' does not exist in network %s"
+                      peer-name
+                      (:name network))]
+      (throw (ex-info msg {})))))
+
+(defn set-peer-prop [network peer-name property value]
   (when (and (= peer-name "self") (= property "name"))
     (let [msg (format "Cannot set property '%s' of peer '%s'" property peer-name)]
       (throw (ex-info msg {}))))
   (if-let [peer-index (find-peer network peer-name)]
     (let [peer (get-in network [:peers peer-index])
           updated-peer
-            (if (not (#{"nil" ""} value))
-              (assoc peer (keyword property) value)
-              (dissoc peer (keyword property)))]
+          (if (not (#{"nil" ""} value))
+            (assoc peer (keyword property) value)
+            (dissoc peer (keyword property)))]
       (if (s/valid? :peer/peer updated-peer)
         (assoc-in network [:peers peer-index] updated-peer)
         (let [[error p] (prop-error :peer/peer updated-peer)
