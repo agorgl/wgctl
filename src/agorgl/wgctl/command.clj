@@ -10,11 +10,15 @@
 
 (defn peer->interface-entry [peer]
   (-> {:private-key (:private-key peer)
-       :address (address-cidr (:address peer))}))
+       :address (address-cidr (:address peer))}
+      (cond-> (some? (:endpoint peer))
+        (assoc :listen-port (last (str/split (:endpoint peer) #":"))))))
 
 (defn peer->peer-entry [peer]
   (-> {:public-key (:public-key peer)
-       :allowed-ips (address-cidr (:address peer))}))
+       :allowed-ips (address-cidr (:address peer))}
+      (cond-> (some? (:endpoint peer))
+        (assoc :endpoint (:endpoint peer)))))
 
 (defn network-config [network]
   (let [interface-entry (peer->interface-entry (first (:peers network)))
