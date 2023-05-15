@@ -1,5 +1,6 @@
 (ns agorgl.wgctl.domain
-  (:require [clojure.spec.alpha :as s]))
+  (:require [clojure.set :as set]
+            [clojure.spec.alpha :as s]))
 
 (defn network-name? [s]
   (re-matches #"^(\p{Lower}|\d|-){2,15}$" s))
@@ -29,18 +30,45 @@
   boolean?)
 
 (s/def :peer/peer
-  (s/keys :req-un [:peer/name
-                   :peer/public-key
-                   :peer/address]
-          :opt-un [:peer/private-key
-                   :peer/endpoint
-                   :peer/hub]))
+  (s/and
+   (s/keys :req-un [:peer/name
+                    :peer/public-key
+                    :peer/address]
+           :opt-un [:peer/private-key
+                    :peer/endpoint
+                    :peer/hub])
+   #(every? #{:name
+              :public-key
+              :address
+              :private-key
+              :endpoint
+              :hub}
+            (keys %))))
 
 (defn make-peer [name public-key address]
   (s/assert :peer/peer
             {:name name
              :public-key public-key
              :address address}))
+
+(defn prop-error [spec m]
+  (when-let [problem (first (::s/problems (s/explain-data spec m)))]
+    (let [{:keys [path pred val]} problem
+          nested-pred (when (seq? pred) (nth pred 2))]
+      (cond
+        (seq path)
+        (let [invalid (last path)]
+          [:invalid-value (name invalid)])
+        (= (first nested-pred) 'clojure.core/contains?)
+        (let [[_ _ required-key] nested-pred]
+          [:missing-key (name required-key)])
+        (= (first nested-pred) 'clojure.core/every?)
+        (let [[_ allowed-keys] nested-pred
+              disallowed-keys (set/difference (set (keys val)) allowed-keys)]
+          [:invalid-key (name (first disallowed-keys))])
+        :else
+        (let [object (-> problem :via first name)]
+          [:invalid-state object])))))
 
 (defn make-self-peer [private-key public-key address]
   (s/assert :peer/peer
@@ -72,7 +100,7 @@
 (defn find-peer [network peer-name]
   (->> network
        :peers
-       (filter #(= (:name %) peer-name))
+       (keep-indexed #(when (= (:name %2) peer-name) %1))
        first))
 
 (defn add-peer [network peer]
@@ -80,6 +108,30 @@
     (update-in network [:peers] conj peer)
     (let [msg (format "Peer with name '%s' already exists in network %s"
                       (:name peer)
+                      (:name network))]
+      (throw (ex-info msg {})))))
+
+(defn set-peer [network peer-name property value]
+  (when (and (= peer-name "self") (= property "name"))
+    (let [msg (format "Cannot set property '%s' of peer '%s'" property peer-name)]
+      (throw (ex-info msg {}))))
+  (if-let [peer-index (find-peer network peer-name)]
+    (let [peer (get-in network [:peers peer-index])
+          updated-peer
+            (if (not (#{"nil" ""} value))
+              (assoc peer (keyword property) value)
+              (dissoc peer (keyword property)))]
+      (if (s/valid? :peer/peer updated-peer)
+        (assoc-in network [:peers peer-index] updated-peer)
+        (let [[error p] (prop-error :peer/peer updated-peer)
+              msg (case error
+                    :invalid-value (format "Invalid value for peer property '%s'" p)
+                    :missing-key (format "Cannot remove required peer property '%s'" p)
+                    :invalid-key (format "Invalid peer property '%s'" p)
+                    :invalid-state (format "Invalid state for peer object"))]
+          (throw (ex-info msg {})))))
+    (let [msg (format "Peer with name '%s' does not exist in network %s"
+                      peer-name
                       (:name network))]
       (throw (ex-info msg {})))))
 

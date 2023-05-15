@@ -42,6 +42,11 @@
                    :desc "Add peer"
                    :args [{:name "name"}
                           {:name "public-key"}]}
+                  {:name "set"
+                   :desc "Set peer property"
+                   :args [{:name "name"}
+                          {:name "property"}
+                          {:name "value"}]}
                   {:name "ls"
                    :desc "List peers"}
                   {:name "rm"

@@ -29,6 +29,7 @@
       ["network" "ls"] [:network-list options]
       ["network" "rm"] [:network-remove (:name arguments) options]
       ["peer" "add"] [:peer-add (:name arguments) (:public-key arguments) options]
+      ["peer" "set"] [:peer-set (:name arguments) (:property arguments) (:value arguments) options]
       ["peer" "ls"] [:peer-list options]
       ["peer" "rm"] [:peer-remove (:name arguments) options])))
 
@@ -38,6 +39,7 @@
         :network-list cmd/network-list
         :network-remove cmd/network-remove
         :peer-add cmd/peer-add
+        :peer-set cmd/peer-set
         :peer-list cmd/peer-list
         :peer-remove cmd/peer-remove)
       (apply (rest args))))
