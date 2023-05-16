@@ -120,6 +120,19 @@
                       (:name network))]
       (throw (ex-info msg {})))))
 
+(defn convert-boolean [value]
+  (case value
+    "true" true
+    "false" false
+    (let [msg (format "Cannot convert value '%s' to boolean" value)]
+      (throw (ex-info msg {})))))
+
+(defn convert-prop [prop value]
+  (let [f (case prop
+            :hub convert-boolean
+            identity)]
+    (f value)))
+
 (defn set-peer-prop [network peer-name property value]
   (when (and (= peer-name "self") (= property "name"))
     (let [msg (format "Cannot set property '%s' of peer '%s'" property peer-name)]
@@ -128,7 +141,7 @@
     (let [peer (get-in network [:peers peer-index])
           updated-peer
           (if (not (#{"nil" ""} value))
-            (assoc peer (keyword property) value)
+            (assoc peer (keyword property) (convert-prop (keyword property) value))
             (dissoc peer (keyword property)))]
       (if (s/valid? :peer/peer updated-peer)
         (assoc-in network [:peers peer-index] updated-peer)
