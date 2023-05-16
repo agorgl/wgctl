@@ -11,8 +11,18 @@
 (defn cidr? [s]
   (re-matches #"^(\d){1,3}(\.\d{1,3}){3}/(\d){1,2}$" s))
 
+(s/def :gateway/addresses
+  (s/and string? cidr?))
+
+(s/def :gateway/gateway
+  (s/keys :req-un [:gateway/addresses]))
+
 (s/def :peer/name
   string?)
+
+(defn make-gateway [addresses]
+  (s/assert :gateway/gateway
+            {:addresses addresses}))
 
 (s/def :peer/private-key
   string?)
@@ -29,6 +39,9 @@
 (s/def :peer/hub
   boolean?)
 
+(s/def :peer/gateways
+  (s/coll-of :gateway/gateway))
+
 (s/def :peer/peer
   (s/and
    (s/keys :req-un [:peer/name
@@ -36,20 +49,23 @@
                     :peer/address]
            :opt-un [:peer/private-key
                     :peer/endpoint
-                    :peer/hub])
+                    :peer/hub
+                    :peer/gateways])
    #(every? #{:name
               :public-key
               :address
               :private-key
               :endpoint
-              :hub}
+              :hub
+              :gateways}
             (keys %))))
 
 (defn make-peer [name public-key address]
   (s/assert :peer/peer
             {:name name
              :public-key public-key
-             :address address}))
+             :address address
+             :gateways []}))
 
 (defn prop-error [spec m]
   (when-let [problem (first (::s/problems (s/explain-data spec m)))]
@@ -75,7 +91,8 @@
             {:name "self"
              :private-key private-key
              :public-key public-key
-             :address address}))
+             :address address
+             :gateways []}))
 
 (s/def :network/name
   (s/and string? network-name?))
@@ -164,4 +181,42 @@
   (if (not= peer-name "self")
     (update-in network [:peers] (fn [peers] (remove #(= (:name %) peer-name) peers)))
     (let [msg "Cannot remove 'self' from peers list"]
+      (throw (ex-info msg {})))))
+
+(defn find-gateway [peer addresses]
+  (->> peer
+       :gateways
+       (keep-indexed #(when (= (:addresses %2) addresses) %1))
+       first))
+
+(defn add-gateway [network peer-name gateway]
+  (if-let [peer-index (find-peer network peer-name)]
+    (let [peer (get-in network [:peers peer-index])]
+      (if (not (find-gateway peer (:addresses gateway)))
+        (update-in network [:peers peer-index :gateways] conj gateway)
+        (let [msg (format "Gateway with addresses '%s' already exists in peer %s"
+                          (:addresses gateway)
+                          (:name peer))]
+          (throw (ex-info msg {})))))
+    (let [msg (format "Peer with name '%s' does not exist in network %s"
+                      peer-name
+                      (:name network))]
+      (throw (ex-info msg {})))))
+
+(defn list-gateways [network peer-name]
+  (if-let [peer-index (find-peer network peer-name)]
+    (let [peer (get-in network [:peers peer-index])]
+      (map :addresses (:gateways peer)))
+    (let [msg (format "Peer with name '%s' does not exist in network %s"
+                      peer-name
+                      (:name network))]
+      (throw (ex-info msg {})))))
+
+(defn remove-gateway [network peer-name gateway-addresses]
+  (if-let [peer-index (find-peer network peer-name)]
+    (update-in network [:peers peer-index :gateways]
+               (fn [gateways] (remove #(= (:addresses %) gateway-addresses) gateways)))
+    (let [msg (format "Peer with name '%s' does not exist in network %s"
+                      peer-name
+                      (:name network))]
       (throw (ex-info msg {})))))

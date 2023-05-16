@@ -20,9 +20,12 @@
 
 (defn peer->peer-entry [network peer]
   (-> {:public-key (:public-key peer)
-       :allowed-ips (if (:hub peer)
-                      (:addresses network)
-                      (address-cidr (:address peer) nil))}
+       :allowed-ips (str/join ", "
+                              (conj (some->> (:gateways peer)
+                                             (map :addresses))
+                                    (if (:hub peer)
+                                      (:addresses network)
+                                      (address-cidr (:address peer) nil))))}
       (cond-> (some? (:endpoint peer))
         (assoc :endpoint (:endpoint peer)))))
 
@@ -104,4 +107,25 @@
   (let [network (load-network (pick-network (:network options)))]
     (-> network
         (d/remove-peer peer-name)
+        save-network)))
+
+(defn gateway-add [addresses options]
+  (let [network (load-network (pick-network (:network options)))
+        peer-name (:peer options)
+        gateway (d/make-gateway addresses)]
+    (-> network
+        (d/add-gateway peer-name gateway)
+        save-network)))
+
+(defn gateway-list [options]
+  (let [network (load-network (pick-network (:network options)))
+        peer-name (:peer options)
+        gateway-addresses (d/list-gateways network peer-name)]
+    (println (str/join "\n" gateway-addresses))))
+
+(defn gateway-remove [addresses options]
+  (let [network (load-network (pick-network (:network options)))
+        peer-name (:peer options)]
+    (-> network
+        (d/remove-gateway peer-name addresses)
         save-network)))

@@ -55,7 +55,28 @@
                    :desc "List peers"}
                   {:name "rm"
                    :desc "Remove peer"
-                   :args [{:name "name"}]}]}]})
+                   :args [{:name "name"}]}]}
+          {:name "gateway"
+           :desc "Manage gateways"
+           :opts [{:name "network"
+                   :refn "NETWORK"
+                   :desc "Network to manage"
+                   :alias "n"}
+                  {:name "peer"
+                   :refn "PEER"
+                   :desc "Peer to manage"
+                   :alias "p"}
+                  {:name "help"
+                   :desc "Show help summary"
+                   :alias "h"}]
+           :cmds [{:name "add"
+                   :desc "Add gateway"
+                   :args [{:name "addresses"}]}
+                  {:name "ls"
+                   :desc "List gateways"}
+                  {:name "rm"
+                   :desc "Remove gateway"
+                   :args [{:name "addresses"}]}]}]})
 
 (defn subspec [spec cmd]
   (loop [spec spec

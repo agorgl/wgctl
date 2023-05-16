@@ -32,7 +32,10 @@
       ["peer" "get"] [:peer-get (:name arguments) (:property arguments) options]
       ["peer" "set"] [:peer-set (:name arguments) (:property arguments) (:value arguments) options]
       ["peer" "ls"] [:peer-list options]
-      ["peer" "rm"] [:peer-remove (:name arguments) options])))
+      ["peer" "rm"] [:peer-remove (:name arguments) options]
+      ["gateway" "add"] [:gateway-add (:addresses arguments) options]
+      ["gateway" "ls"] [:gateway-list options]
+      ["gateway" "rm"] [:gateway-remove (:addresses arguments) options])))
 
 (defn dispatch [args]
   (-> (case (first args)
@@ -43,7 +46,10 @@
         :peer-get cmd/peer-get
         :peer-set cmd/peer-set
         :peer-list cmd/peer-list
-        :peer-remove cmd/peer-remove)
+        :peer-remove cmd/peer-remove
+        :gateway-add cmd/gateway-add
+        :gateway-list cmd/gateway-list
+        :gateway-remove cmd/gateway-remove)
       (apply (rest args))))
 
 (defn -main [& args]
