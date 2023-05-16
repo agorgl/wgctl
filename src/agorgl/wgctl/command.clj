@@ -5,24 +5,30 @@
             [agorgl.wgctl.wireguard :as wg]
             [agorgl.wgctl.repository :as r]))
 
-(defn address-cidr [address]
-  (str address "/32"))
+(defn address-cidr [address plen]
+  (str address "/" (or plen 32)))
 
-(defn peer->interface-entry [peer]
+(defn peer->interface-entry [network peer]
   (-> {:private-key (:private-key peer)
-       :address (address-cidr (:address peer))}
+       :address (address-cidr (:address peer)
+                              (when (:hub peer)
+                                (net/plength (:addresses network))))}
       (cond-> (some? (:endpoint peer))
-        (assoc :listen-port (last (str/split (:endpoint peer) #":"))))))
+        (assoc :listen-port (last (str/split (:endpoint peer) #":"))))
+      (cond-> (:hub peer)
+        (assoc :post-up "sysctl -w net.ipv4.conf.%i.forwarding=1"))))
 
-(defn peer->peer-entry [peer]
+(defn peer->peer-entry [network peer]
   (-> {:public-key (:public-key peer)
-       :allowed-ips (address-cidr (:address peer))}
+       :allowed-ips (if (:hub peer)
+                      (:addresses network)
+                      (address-cidr (:address peer) nil))}
       (cond-> (some? (:endpoint peer))
         (assoc :endpoint (:endpoint peer)))))
 
 (defn network-config [network]
-  (let [interface-entry (peer->interface-entry (first (:peers network)))
-        peer-entries (map peer->peer-entry (rest (:peers network)))]
+  (let [interface-entry (peer->interface-entry network (first (:peers network)))
+        peer-entries (map #(peer->peer-entry network %) (rest (:peers network)))]
     (wg/config-file (conj peer-entries interface-entry))))
 
 (defn load-network [name]
