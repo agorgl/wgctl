@@ -115,8 +115,37 @@
              {:required refn})))]
     (mapv convert opts)))
 
+(defn distinct-by [f coll]
+  (let [step (fn step [xs seen]
+               (lazy-seq
+                ((fn [[x :as xs] seen]
+                   (when-let [s (seq xs)]
+                     (let [fx (f x)]
+                       (if (contains? seen fx)
+                         (recur (rest s) seen)
+                         (cons x (step (rest s) (conj seen fx)))))))
+                 xs seen)))]
+    (step coll #{})))
+
+(defn cmdopts [spec cmd]
+  (loop [spec spec
+         opts (:opts spec)
+         cmd (rest cmd)]
+    (if (seq cmd)
+      (let [spec (->> spec :cmds (filter #(= (:name %) (first cmd))) first)]
+        (recur spec
+               (->> (:opts spec)
+                    (concat opts)
+                    (reverse)
+                    (distinct-by :name)
+                    (reverse)
+                    (into []))
+               (rest cmd)))
+      opts)))
+
 (defn parse-opts [spec [cmd args]]
-  (let [{:keys [cmds opts]} (subspec spec cmd)]
+  (let [{:keys [cmds]} (subspec spec cmd)
+        opts (cmdopts spec cmd)]
     (cli/parse-opts
      args (opts->tools-cli-spec opts)
      :in-order (some? cmds))))

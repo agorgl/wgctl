@@ -1,7 +1,7 @@
 (ns agorgl.wgctl.cli-test
   (:require [clojure.test :refer :all]
             [clojure.string :as str]
-            [agorgl.wgctl.cli :refer [subspec usage summary parse-args]]))
+            [agorgl.wgctl.cli :refer [subspec usage summary cmdopts parse-args]]))
 
 (def spec
   {:name "farmctl"
@@ -12,9 +12,15 @@
            :alias "f"}
           {:name "version"
            :desc "Show program version"
-           :alias "v"}]
+           :alias "v"}
+          {:name "help"
+           :desc "Show help summary"
+           :alias "h"}]
    :cmds [{:name "barn"
            :desc "Manage barns"
+           :opts [{:name "help"
+                   :desc "Show help summary"
+                   :alias "h"}]
            :cmds [{:name "add"
                    :desc "Add barn"
                    :args [{:name "name"}
@@ -29,7 +35,10 @@
            :opts [{:name "barn"
                    :refn "BARN"
                    :desc "Barn to manage"
-                   :alias "b"}]
+                   :alias "b"}
+                  {:name "help"
+                   :desc "Show help summary"
+                   :alias "h"}]
            :cmds [{:name "add"
                    :desc "Add animal"
                    :args [{:name "type"}
@@ -56,7 +65,7 @@
     (is (= (usage spec ["farmctl"])
            "farmctl [options] [command]"))
     (is (= (usage spec ["farmctl" "barn"])
-           "farmctl barn [command]"))
+           "farmctl barn [options] [command]"))
     (is (= (usage spec ["farmctl" "barn" "add"])
            "farmctl barn add <name> [type]"))))
 
@@ -74,7 +83,19 @@
                            ""
                            "Options:"
                            "  -f, --farm      Farm to manage"
-                           "  -v, --version   Show program version"])))))
+                           "  -v, --version   Show program version"
+                           "  -h, --help      Show help summary"])))))
+
+(deftest cmdopts-test
+  (testing "gets command options"
+    (is (= (mapv :name (cmdopts spec ["farmctl"]))
+           ["farm" "version" "help"]))
+    (is (= (mapv :name (cmdopts spec ["farmctl" "barn"]))
+           ["farm" "version" "help"]))
+    (is (= (mapv :name (cmdopts spec ["farmctl" "animal"]))
+           ["farm" "version" "barn" "help"]))
+    (is (= (mapv :name (cmdopts spec ["farmctl" "animal" "ls"]))
+           ["farm" "version" "barn" "help"]))))
 
 (defn has-error? [re result]
   (->> result
