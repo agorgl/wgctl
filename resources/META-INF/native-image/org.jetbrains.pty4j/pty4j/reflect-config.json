@@ -1,0 +1,28 @@
+[
+  {
+    "name": "jtermios.linux.JTermiosImpl$Linux_C_lib_DirectMapping",
+    "queryAllDeclaredMethods": true
+  },
+  {
+    "name": "com.pty4j.unix.PTYInputStream",
+    "queryAllPublicMethods": true,
+    "methods": [
+      {
+        "name": "read",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "com.pty4j.unix.PTYOutputStream",
+    "queryAllPublicMethods": true,
+    "methods": [
+      {
+        "name": "write",
+        "parameterTypes": [
+          "int"
+        ]
+      }
+    ]
+  }
+]

@@ -1,0 +1,17 @@
+[
+  {
+    "interfaces": [
+      "com.pty4j.unix.NativePtyExecutor$Pty4J"
+    ]
+  },
+  {
+    "interfaces": [
+      "com.pty4j.unix.linux.OSFacadeImpl$C_lib"
+    ]
+  },
+  {
+    "interfaces": [
+      "com.pty4j.unix.linux.OSFacadeImpl$Linux_Util_lib"
+    ]
+  }
+]

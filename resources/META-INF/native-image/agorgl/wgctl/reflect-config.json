@@ -1,0 +1,43 @@
+[
+  {
+    "name": "java.io.OutputStream",
+    "methods": [
+      {
+        "name": "flush",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "java.io.OutputStreamWriter",
+    "queryAllPublicMethods": true,
+    "methods": [
+      {
+        "name": "write",
+        "parameterTypes": [
+          "int"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "clojure.lang.LineNumberingPushbackReader",
+    "queryAllPublicMethods": true,
+    "methods": [
+      {
+        "name": "read",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "java.io.BufferedReader",
+    "queryAllPublicMethods": true,
+    "methods": [
+      {
+        "name": "readLine",
+        "parameterTypes": []
+      }
+    ]
+  }
+]

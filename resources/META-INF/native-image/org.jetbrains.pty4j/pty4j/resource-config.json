@@ -1,0 +1,10 @@
+{
+  "resources": {
+    "includes": [
+      {
+        "pattern": "\\Qresources/com/pty4j/native/linux/x86-64/libpty.so\\E"
+      }
+    ]
+  },
+  "bundles": []
+}
