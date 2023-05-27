@@ -55,7 +55,6 @@
                    "-J-Dclojure.compiler.direct-linking=true"
                    "-J-Dclojure.spec.skip-macros=true"
                    "--no-fallback"
-                   "--static"
                    "--verbose"]]
       (b/process {:command-args command}))
     (throw (ex-info "Environment variable GRAALVM_HOME is not set" {}))))
