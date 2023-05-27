@@ -59,5 +59,7 @@
     (try
       (dispatch (dispatch-array args))
       (catch Exception e
-        (println (.getMessage e)))))
-  (shutdown-agents))
+        (println (.getMessage e))
+        (System/exit 1))))
+  (shutdown-agents)
+  (System/exit 0))
