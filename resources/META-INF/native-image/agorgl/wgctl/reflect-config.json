@@ -1,5 +1,14 @@
 [
   {
+    "name": "java.lang.Process",
+    "methods": [
+      {
+        "name": "isAlive",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
     "name": "java.io.OutputStream",
     "methods": [
       {
@@ -17,6 +26,22 @@
         "parameterTypes": [
           "int"
         ]
+      }
+    ]
+  },
+  {
+    "name": "java.io.PrintWriter",
+    "queryAllPublicMethods": true,
+    "methods": [
+      {
+        "name": "write",
+        "parameterTypes": [
+          "int"
+        ]
+      },
+      {
+        "name": "flush",
+        "parameterTypes": []
       }
     ]
   },

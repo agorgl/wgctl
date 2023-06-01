@@ -24,5 +24,23 @@
         ]
       }
     ]
+  },
+  {
+    "name": "com.pty4j.unix.UnixPtyProcess",
+    "queryAllPublicMethods": true,
+    "methods": [
+      {
+        "name": "getOutputStream",
+        "parameterTypes": []
+      },
+      {
+        "name": "getInputStream",
+        "parameterTypes": []
+      },
+      {
+        "name": "getErrorStream",
+        "parameterTypes": []
+      }
+    ]
   }
 ]
