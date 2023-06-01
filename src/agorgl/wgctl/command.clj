@@ -20,7 +20,8 @@
         (assoc :post-up "sysctl -w net.ipv4.conf.%i.forwarding=1"))))
 
 (defn peer->peer-entry [network peer]
-  (-> {:public-key (:public-key peer)
+  (-> {:name (:name peer)
+       :public-key (:public-key peer)
        :allowed-ips (str/join ", "
                               (conj (some->> (:gateways peer)
                                              (map :addresses))

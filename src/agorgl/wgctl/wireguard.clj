@@ -39,7 +39,8 @@
   (->> (select-keys props (keys peer-keys))
        (map (fn [[k v]] [(k peer-keys) v]))
        (into {})
-       (ini-section "Peer")))
+       (ini-section "Peer")
+       (str (format "# %s\n" (:name props)))))
 
 (defn config-dir []
   (or (System/getenv "WIREGUARD_DIR") "/etc/wireguard"))
