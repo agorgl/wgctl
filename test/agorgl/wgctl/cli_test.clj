@@ -9,7 +9,8 @@
    :opts [{:name "farm"
            :refn "FARM"
            :desc "Farm to manage"
-           :alias "f"}
+           :alias "f"
+           :env "FARM"}
           {:name "version"
            :desc "Show program version"
            :alias "v"}

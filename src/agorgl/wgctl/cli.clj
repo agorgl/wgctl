@@ -8,7 +8,8 @@
    :opts [{:name "remote"
            :refn "HOST"
            :desc "Manage remote host"
-           :alias "r"}
+           :alias "r"
+           :env "WIREGUARD_REMOTE"}
           {:name "version"
            :desc "Show program version"
            :alias "v"}
@@ -125,7 +126,7 @@
 
 (defn opts->tools-cli-spec [opts]
   (let [convert
-        (fn [{:keys [name alias desc refn]}]
+        (fn [{:keys [name alias desc refn env]}]
           (merge
            {:id name
             :desc desc
@@ -133,7 +134,9 @@
            (when alias
              {:short-opt (str "-" alias)})
            (when (some? refn)
-             {:required refn})))]
+             {:required refn})
+           (when env
+             {:default (System/getenv env)})))]
     (mapv convert opts)))
 
 (defn distinct-by [f coll]
@@ -164,6 +167,9 @@
                (rest cmd)))
       opts)))
 
+(defn remove-nils [m]
+  (into {} (remove (fn [[_ v]] (nil? v)) m)))
+
 (defn parse-opts [spec [cmd args]]
   (let [{:keys [cmds]} (subspec spec cmd)
         opts (cmdopts spec cmd)]
@@ -193,7 +199,7 @@
                   (conj (format "Incorrect number of arguments '%s'" usage)))))]
       [(-> {:command cmd}
            (merge (select-keys parse-result [:options :arguments :errors]))
-           (update-in [:options] update-keys keyword)
+           (update-in [:options] (fn [opts] (-> opts (update-keys keyword) remove-nils)))
            (update-in [:arguments] (fn [args] (zipmap (->> spec :args (map #(keyword (:name %)))) args)))
            (update-in [:errors] concat command-errors argument-errors))
        (when (and (seq args) (:cmds spec) (empty? command-errors))
