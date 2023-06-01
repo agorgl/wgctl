@@ -23,7 +23,7 @@
   (-> {:name (:name peer)
        :public-key (:public-key peer)
        :allowed-ips (str/join ", "
-                              (conj (some->> (:gateways peer)
+                              (conj (some->> (:routes peer)
                                              (map :addresses))
                                     (if (:hub peer)
                                       (:addresses network)
@@ -111,25 +111,25 @@
         (d/remove-peer peer-name)
         (save-network remote))))
 
-(defn gateway-add [addresses {:keys [remote network peer]}]
+(defn route-add [addresses {:keys [remote network peer]}]
   (let [network (load-network (pick-network network remote) remote)
         peer-name peer
-        gateway (d/make-gateway addresses)]
+        route (d/make-route addresses)]
     (-> network
-        (d/add-gateway peer-name gateway)
+        (d/add-route peer-name route)
         (save-network remote))))
 
-(defn gateway-list [{:keys [remote network peer]}]
+(defn route-list [{:keys [remote network peer]}]
   (let [network (load-network (pick-network network remote) remote)
         peer-name peer
-        gateway-addresses (d/list-gateways network peer-name)]
-    (println (str/join "\n" gateway-addresses))))
+        route-addresses (d/list-routes network peer-name)]
+    (println (str/join "\n" route-addresses))))
 
-(defn gateway-remove [addresses {:keys [remote network peer]}]
+(defn route-remove [addresses {:keys [remote network peer]}]
   (let [network (load-network (pick-network network remote) remote)
         peer-name peer]
     (-> network
-        (d/remove-gateway peer-name addresses)
+        (d/remove-route peer-name addresses)
         (save-network remote))))
 
 (defn print-version []

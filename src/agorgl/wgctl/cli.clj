@@ -57,8 +57,8 @@
                   {:name "rm"
                    :desc "Remove peer"
                    :args [{:name "name"}]}]}
-          {:name "gateway"
-           :desc "Manage gateways"
+          {:name "route"
+           :desc "Manage routes"
            :opts [{:name "network"
                    :refn "NETWORK"
                    :desc "Network to manage"
@@ -71,12 +71,12 @@
                    :desc "Show help summary"
                    :alias "h"}]
            :cmds [{:name "add"
-                   :desc "Add gateway"
+                   :desc "Add route"
                    :args [{:name "addresses"}]}
                   {:name "ls"
-                   :desc "List gateways"}
+                   :desc "List routes"}
                   {:name "rm"
-                   :desc "Remove gateway"
+                   :desc "Remove route"
                    :args [{:name "addresses"}]}]}]})
 
 (defn subspec [spec cmd]

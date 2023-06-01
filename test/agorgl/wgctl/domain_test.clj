@@ -4,7 +4,7 @@
             [agorgl.wgctl.domain :refer [network-name?
                                          address?
                                          cidr?
-                                         make-gateway
+                                         make-route
                                          make-peer
                                          make-self-peer
                                          make-network
@@ -13,9 +13,9 @@
                                          set-peer-prop
                                          list-peers
                                          remove-peer
-                                         add-gateway
-                                         list-gateways
-                                         remove-gateway]]))
+                                         add-route
+                                         list-routes
+                                         remove-route]]))
 
 (deftest validation-test
   (testing "validates network names"
@@ -77,24 +77,24 @@
       (is (thrown? Exception (remove-peer network "self")))
       (is (= 1 (count (:peers (remove-peer (add-peer network peer) "peer")))))))
 
-  (testing "adds gateway to peer"
+  (testing "adds route to peer"
     (let [self-peer (make-self-peer "<privkey>" "<pubkey>" "10.0.0.1")
           network (make-network "network" "10.0.0.0/24" self-peer)
-          gateway (make-gateway "172.16.0.0/16")]
-      (is (= (:addresses (get-in (add-gateway network "self" gateway) [:peers 0 :gateways 0]))
+          route (make-route "172.16.0.0/16")]
+      (is (= (:addresses (get-in (add-route network "self" route) [:peers 0 :routes 0]))
              "172.16.0.0/16"))
-      (is (thrown? Exception (add-gateway (add-gateway network "self" gateway) "self" gateway)))))
+      (is (thrown? Exception (add-route (add-route network "self" route) "self" route)))))
 
-  (testing "lists peer gateways"
+  (testing "lists peer routes"
     (let [self-peer (make-self-peer "<privkey>" "<pubkey>" "10.0.0.1")
           network (make-network "network" "10.0.0.0/24" self-peer)
-          gateway (make-gateway "172.16.0.0/16")]
-      (is (= (list-gateways (add-gateway network "self" gateway) "self")
+          route (make-route "172.16.0.0/16")]
+      (is (= (list-routes (add-route network "self" route) "self")
              ["172.16.0.0/16"]))))
 
-  (testing "removes peer gateway"
+  (testing "removes peer route"
     (let [self-peer (make-self-peer "<privkey>" "<pubkey>" "10.0.0.1")
           network (make-network "network" "10.0.0.0/24" self-peer)
-          gateway (make-gateway "172.16.0.0/16")]
-      (is (= (get-in (remove-gateway (add-gateway network "self" gateway) "self" "172.16.0.0/16") [:peers 0 :gateways])
+          route (make-route "172.16.0.0/16")]
+      (is (= (get-in (remove-route (add-route network "self" route) "self" "172.16.0.0/16") [:peers 0 :routes])
              [])))))
