@@ -1,5 +1,6 @@
 (ns agorgl.wgctl.command
   (:require [clojure.string :as str]
+            [clojure.java.io :as io]
             [agorgl.wgctl.domain :as d]
             [agorgl.wgctl.network :as net]
             [agorgl.wgctl.wireguard :as wg]
@@ -129,3 +130,7 @@
     (-> network
         (d/remove-gateway peer-name addresses)
         (save-network remote))))
+
+(defn print-version []
+  (let [version (str/trim (slurp (io/resource "version")))]
+    (println (format "wgctl %s" version))))

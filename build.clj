@@ -1,10 +1,11 @@
 (ns build
   (:refer-clojure :exclude [test])
-  (:require [clojure.java.io :as io]
+  (:require [clojure.string :as str]
+            [clojure.java.io :as io]
             [clojure.tools.build.api :as b]))
 
 (def lib 'net.clojars.agorgl/wgctl)
-(def version "0.1.0-SNAPSHOT")
+(def version (str/trim (slurp (io/resource "version"))))
 (def main 'agorgl.wgctl.core)
 (def class-dir "target/classes")
 
@@ -47,7 +48,7 @@
   (println "Building native binary...")
   (if-let [graal-home (System/getenv "GRAALVM_HOME")]
     (let [jar (:uber-file (uber-opts opts))
-          binary (format "target/%s-%s" lib version)
+          binary (str/replace jar #"\.jar$" "")
           command [(str (io/file graal-home "bin" "native-image"))
                    "-jar" jar
                    binary

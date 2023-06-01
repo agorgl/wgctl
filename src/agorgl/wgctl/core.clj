@@ -15,6 +15,12 @@
           (println))
       (System/exit 0))))
 
+(defn check-version [args]
+  (let [vercmd (->> args (filter #(-> % :options :version)) first)]
+    (when (some? vercmd)
+      (cmd/print-version)
+      (System/exit 0))))
+
 (defn check-error [args]
   (let [errcmd (->> args (filter #(seq (:errors %))) first)]
     (when (some? errcmd)
@@ -55,6 +61,7 @@
 (defn -main [& args]
   (let [args (cli/parse-args cli/spec (concat ["wgctl"] args))]
     (check-help args)
+    (check-version args)
     (check-error args)
     (try
       (dispatch (dispatch-array args))
