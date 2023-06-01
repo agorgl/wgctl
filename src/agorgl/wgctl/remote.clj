@@ -4,7 +4,7 @@
             [clojure.data.json :as json])
   (:import [com.pty4j PtyProcessBuilder]))
 
-(def remote-shell-streams (atom nil))
+(def remote-shell-proc (atom nil))
 
 (defn enter-raw-mode []
   (let [cmd ["stty" "-icanon" "-echo"]]
@@ -20,12 +20,17 @@
         (.start)
         (.waitFor))))
 
+(defn proc-streams [proc]
+  {:in (.getOutputStream proc)
+   :out (.getInputStream proc)
+   :err (.getErrorStream proc)})
+
 (defn remote-shell [host]
-  (when (nil? @remote-shell-streams)
+  (when (nil? @remote-shell-proc)
     (enter-raw-mode)
-    (let [streams
+    (let [proc
           (future
-            (let [cmd ["ssh" "-q" "-t" host
+            (let [cmd ["ssh" "-t" host
                        (format "sudo bash -c '%s'"
                                (str "printf \"\\0\" ; "
                                     "while read -r msg; do "
@@ -35,15 +40,13 @@
                                     "done"))]
                   proc (-> (PtyProcessBuilder. (into-array cmd))
                            (.setConsole true)
-                           (.start))
-                  streams {:in (.getOutputStream proc)
-                           :out (.getInputStream proc)
-                           :err (.getErrorStream proc)}]
+                           (.start))]
               (.addShutdownHook (Runtime/getRuntime) (Thread. (fn [] (.destroy proc))))
-              (reset! remote-shell-streams streams)))
+              (reset! remote-shell-proc proc)))
+          streams (proc-streams @proc)
           fout
           (future
-            (let [out (:out @streams)]
+            (let [out (:out streams)]
               (loop []
                 (let [ch (.read out)]
                   (when (not= ch -1)
@@ -55,7 +58,7 @@
                         (recur))))))))
           ferr
           (future
-            (let [err (:err @streams)]
+            (let [err (:err streams)]
               (loop []
                 (let [ch (.read err)]
                   (when (not= ch -1)
@@ -64,7 +67,7 @@
                     (recur))))))
           fin
           (future
-            (let [in (:in @streams)]
+            (let [in (:in streams)]
               (loop []
                 (let [ch (.read *in*)]
                   (when (not= ch -1)
@@ -73,8 +76,13 @@
                     (recur))))))]
       @fout ; Wait for ready
       (leave-raw-mode)
-      (run! future-cancel [ferr fin])))
-  @remote-shell-streams)
+      (if (.isAlive @proc)
+        (run! future-cancel [ferr fin])
+        (do
+          @ferr
+          (let [msg "Could not start remote executor"]
+            (throw (ex-info msg {})))))))
+  (proc-streams @remote-shell-proc))
 
 (defn remote-command [host cmd in]
   (let [payload (str (json/write-str {:cmd cmd :in in}) "\n")
