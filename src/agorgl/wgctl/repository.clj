@@ -25,12 +25,15 @@
 (defn local-delete-file [file]
   (io/delete-file file))
 
+(defn remote-command-err [host err]
+  (format "Remote command on host %s failed with: %s" host err))
+
 (defn remote-list-files [host dir]
   (let [cmd (str "find " dir " -type f -exec basename {} \\;")
         {:keys [exit out err]} (remote-command host cmd nil)]
     (if (zero? exit)
       (str/split out #"\n")
-      (let [msg (format "Remote command failed with: %s" err)]
+      (let [msg (remote-command-err host err)]
         (throw (ex-info msg {}))))))
 
 (defn remote-file-exists? [host file]
@@ -38,7 +41,7 @@
         {:keys [exit err]} (remote-command host cmd nil)]
     (if (str/blank? err)
       (zero? exit)
-      (let [msg (format "Remote command failed with: %s" err)]
+      (let [msg (remote-command-err host err)]
         (throw (ex-info msg {}))))))
 
 (defn remote-read-file [host file]
@@ -46,7 +49,7 @@
         {:keys [exit out err]} (remote-command host cmd nil)]
     (if (zero? exit)
       out
-      (let [msg (format "Remote command failed with: %s" err)]
+      (let [msg (remote-command-err host err)]
         (throw (ex-info msg {}))))))
 
 (defn remote-write-file [host file data]
@@ -54,14 +57,14 @@
         {:keys [exit out err]} (remote-command host cmd data)]
     (if (zero? exit)
       out
-      (let [msg (format "Remote command failed with: %s" err)]
+      (let [msg (remote-command-err host err)]
         (throw (ex-info msg {}))))))
 
 (defn remote-delete-file [host file]
   (let [cmd (str "rm " file)
         {:keys [err]} (remote-command host cmd nil)]
     (when-not (str/blank? err)
-      (let [msg (format "Remote command failed with: %s" err)]
+      (let [msg (remote-command-err host err)]
         (throw (ex-info msg {}))))))
 
 (defn list-files [host dir]
