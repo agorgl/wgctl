@@ -4,7 +4,8 @@
             [agorgl.wgctl.domain :as d]
             [agorgl.wgctl.network :as net]
             [agorgl.wgctl.wireguard :as wg]
-            [agorgl.wgctl.repository :as r]))
+            [agorgl.wgctl.repository :as r]
+            [agorgl.wgctl.cli :as cli]))
 
 (defn address-cidr [address plen]
   (str address "/" (or plen 32)))
@@ -88,6 +89,10 @@
         (d/add-peer peer)
         (save-network remote))))
 
+(defn peer-properties []
+  (let [properties (map name d/peer-properties)]
+    (println (str/join "\n" properties))))
+
 (defn peer-get [peer-name property {:keys [remote network]}]
   (let [network (load-network (pick-network network remote) remote)
         prop (d/get-peer-prop network peer-name property)]
@@ -131,6 +136,25 @@
     (-> network
         (d/remove-route peer-name addresses)
         (save-network remote))))
+
+(defn complete-type [type {:keys [remote] :as options}]
+  (when-not remote
+    (case type
+      :network (str/split (with-out-str (network-list options)) #"\n")
+      :peer (str/split (with-out-str (peer-list options)) #"\n")
+      :peer-property (str/split (with-out-str (peer-properties)) #"\n")
+      :route (str/split (with-out-str (route-list options)) #"\n")
+      nil)))
+
+(defn complete [args]
+  (let [completion (cli/complete cli/spec args)]
+    (if (map? completion)
+      (try
+        (let [{:keys [type opts]} completion]
+          (when-let [coll (complete-type type opts)]
+            (println (str/join "\n" coll))))
+        (catch Exception _))
+      (println (str/join "\n" completion)))))
 
 (defn print-version []
   (let [version (str/trim (slurp (io/resource "version")))]

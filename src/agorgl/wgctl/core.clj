@@ -8,6 +8,11 @@
   [data]
   (println (str "Hello, " (or (:name data) "World") "!")))
 
+(defn check-complete [args]
+  (when (= (first args) "complete")
+    (cmd/complete (rest args))
+    (System/exit 0)))
+
 (defn check-help [args]
   (let [hlpcmd (->> args (filter #(-> % :options :help)) first)]
     (when (some? hlpcmd)
@@ -59,6 +64,7 @@
       (apply (rest args))))
 
 (defn -main [& args]
+  (check-complete args)
   (let [args (cli/parse-args cli/spec (concat ["wgctl"] args))]
     (check-help args)
     (check-version args)

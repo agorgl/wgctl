@@ -42,6 +42,15 @@
 (s/def :peer/routes
   (s/coll-of :route/route))
 
+(def peer-properties
+  #{:name
+    :public-key
+    :address
+    :private-key
+    :endpoint
+    :hub
+    :routes})
+
 (s/def :peer/peer
   (s/and
    (s/keys :req-un [:peer/name
@@ -51,14 +60,7 @@
                     :peer/endpoint
                     :peer/hub
                     :peer/routes])
-   #(every? #{:name
-              :public-key
-              :address
-              :private-key
-              :endpoint
-              :hub
-              :routes}
-            (keys %))))
+   #(every? peer-properties (keys %))))
 
 (defn make-peer [name public-key address]
   (s/assert :peer/peer

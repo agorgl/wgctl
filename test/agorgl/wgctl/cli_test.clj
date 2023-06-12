@@ -1,12 +1,13 @@
 (ns agorgl.wgctl.cli-test
   (:require [clojure.test :refer :all]
             [clojure.string :as str]
-            [agorgl.wgctl.cli :refer [subspec usage summary cmdopts parse-args]]))
+            [agorgl.wgctl.cli :refer [subspec usage summary cmdopts parse-args complete]]))
 
 (def spec
   {:name "farmctl"
    :desc "Manage farm barns and animals"
-   :opts [{:name "farm"
+   :opts [{:type :farm
+           :name "farm"
            :refn "FARM"
            :desc "Farm to manage"
            :alias "f"
@@ -30,10 +31,12 @@
                    :desc "List barns"}
                   {:name "rm"
                    :desc "Remove barn"
-                   :args [{:name "name"}]}]}
+                   :args [{:type :barn
+                           :name "name"}]}]}
           {:name "animal"
            :desc "Manage animals"
-           :opts [{:name "barn"
+           :opts [{:type :barn
+                   :name "barn"
                    :refn "BARN"
                    :desc "Barn to manage"
                    :alias "b"}
@@ -48,7 +51,8 @@
                    :desc "List animals"}
                   {:name "rm"
                    :desc "Remove animal"
-                   :args [{:name "name"}]}]}]})
+                   :args [{:type :animal
+                           :name "name"}]}]}]})
 
 (deftest subspec-test
   (testing "gets subspec spec"
@@ -134,3 +138,26 @@
     (is (has-error? #"Unknown option" (parse-args spec ["farmctl" "animal" "-x"])))
     (is (has-error? #"Incorrect number of arguments" (parse-args spec ["farmctl" "barn" "add"])))
     (is (has-error? #"Incorrect number of arguments" (parse-args spec ["farmctl" "barn" "add" "fa" "fou" "fe"])))))
+
+(deftest complete-test
+  (testing "completes next argument"
+    (is (= (complete spec ["farmctl" ""])
+           ["barn" "animal"]))
+    (is (= (complete spec ["farmctl" "-"])
+           ["--farm" "--version" "--help"]))
+    (is (= (complete spec ["farmctl" "-f" "cozyfarm" ""])
+           ["barn" "animal"]))
+    (is (= (complete spec ["farmctl" "ba"])
+           ["barn" "animal"]))
+    (is (= (complete spec ["farmctl" "barn" ""])
+           ["add" "ls" "rm"]))
+    (is (= (complete spec ["farmctl" "barn" "-"])
+           ["--farm" "--version" "--help"]))
+    (is (= (complete spec ["farmctl" "barn" "add"])
+           ["--farm" "--version" "--help"]))
+    (is (= (complete spec ["farmctl" "barn" "rm" ""])
+           {:type :barn, :opts {}}))
+    (is (= (complete spec ["farmctl" "animal" "-b"])
+           ["--barn" "--farm" "--version" "--help"]))
+    (is (= (complete spec ["farmctl" "animal" "-b" ""])
+           {:type :barn, :opts {}}))))

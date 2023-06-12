@@ -1,11 +1,13 @@
 (ns agorgl.wgctl.cli
   (:require [clojure.string :as str]
+            [clojure.set :as set]
             [clojure.tools.cli :as cli]))
 
 (def spec
   {:name "wgctl"
    :desc "Manage wireguard networks and peers"
-   :opts [{:name "remote"
+   :opts [{:type :remote
+           :name "remote"
            :refn "HOST"
            :desc "Manage remote host"
            :alias "r"
@@ -29,10 +31,12 @@
                    :desc "List networks"}
                   {:name "rm"
                    :desc "Remove network"
-                   :args [{:name "name"}]}]}
+                   :args [{:type :network
+                           :name "name"}]}]}
           {:name "peer"
            :desc "Manage peers"
-           :opts [{:name "network"
+           :opts [{:type :network
+                   :name "network"
                    :refn "NETWORK"
                    :desc "Network to manage"
                    :alias "n"}
@@ -45,25 +49,32 @@
                           {:name "public-key"}]}
                   {:name "get"
                    :desc "Get peer property"
-                   :args [{:name "name"}
-                          {:name "property"}]}
+                   :args [{:type :peer
+                           :name "name"}
+                          {:type :peer-property
+                           :name "property"}]}
                   {:name "set"
                    :desc "Set peer property"
-                   :args [{:name "name"}
-                          {:name "property"}
+                   :args [{:type :peer
+                           :name "name"}
+                          {:type :peer-property
+                           :name "property"}
                           {:name "value"}]}
                   {:name "ls"
                    :desc "List peers"}
                   {:name "rm"
                    :desc "Remove peer"
-                   :args [{:name "name"}]}]}
+                   :args [{:type :peer
+                           :name "name"}]}]}
           {:name "route"
            :desc "Manage routes"
-           :opts [{:name "network"
+           :opts [{:type :network
+                   :name "network"
                    :refn "NETWORK"
                    :desc "Network to manage"
                    :alias "n"}
-                  {:name "peer"
+                  {:type :peer
+                   :name "peer"
                    :refn "PEER"
                    :desc "Peer to manage"
                    :alias "p"}
@@ -77,7 +88,11 @@
                    :desc "List routes"}
                   {:name "rm"
                    :desc "Remove route"
-                   :args [{:name "addresses"}]}]}]})
+                   :args [{:type :route
+                           :name "addresses"}]}]}
+          {:name "complete"
+           :desc "Complete commands"
+           :hidden true}]})
 
 (defn subspec [spec cmd]
   (loop [spec spec
@@ -105,7 +120,8 @@
 
 (defn summary [spec cmd]
   (let [usage (usage spec cmd)
-        {:keys [desc cmds opts]} (subspec spec cmd)
+        {:keys [desc cmds opts]} (-> (subspec spec cmd)
+                                     (update-in [:cmds] #(remove :hidden %)))
         str-section (fn [[title lines]]
                       (str/join "\n" (into [title] (map #(str "  " %) lines))))
         str-cmd (fn [{:keys [name desc]}]
@@ -117,7 +133,7 @@
           (conj [desc]))
         (cond-> (some? usage)
           (conj ["Usage:" [usage]]))
-        (cond-> (some? cmds)
+        (cond-> (seq cmds)
           (conj ["Commands:" (map str-cmd cmds)]))
         (cond-> (some? opts)
           (conj ["Options:" (map str-opt opts)]))
@@ -175,7 +191,7 @@
         opts (cmdopts spec cmd)]
     (cli/parse-opts
      args (opts->tools-cli-spec opts)
-     :in-order (some? cmds))))
+     :in-order true)))
 
 (defn parse-cmd [spec [cmd args]]
   (let [parse-result (parse-opts spec [cmd args])
@@ -201,7 +217,9 @@
            (merge (select-keys parse-result [:options :arguments :errors]))
            (update-in [:options] (fn [opts] (-> opts (update-keys keyword) remove-nils)))
            (update-in [:arguments] (fn [args] (zipmap (->> spec :args (map #(keyword (:name %)))) args)))
-           (update-in [:errors] concat command-errors argument-errors))
+           (update-in [:errors] concat command-errors argument-errors)
+           (cond-> (and (empty? (:cmds spec)) (> (count args) (count (:args spec))))
+             (update-in [:rest-arguments] (fn [_] (subvec args (count (:args spec)))))))
        (when (and (seq args) (:cmds spec) (empty? command-errors))
          [(conj cmd command) (rest args)])])))
 
@@ -213,3 +231,25 @@
       (if (some? a)
         (recur result a)
         result))))
+
+(defn second-to-last [coll]
+  (first (take-last 2 coll)))
+
+(defn complete [spec args]
+  (let [result (parse-args spec args)
+        command (-> result last :command)
+        subspec (subspec spec command)
+        cmdopts (cmdopts spec command)
+        previous-opt (first (filter #(#{(:name %) (:alias %)} (str/replace (second-to-last args) #"^-+" "")) cmdopts))
+        next-arg (get (:args subspec) (dec (+ (count (-> result last :arguments)) (count (-> result last :rest-arguments)))))
+        allopts (->> result (map :options) (apply merge) (#(dissoc % (keyword (:name previous-opt)))))]
+    (if-let [t (or (:type previous-opt)
+                   (:type next-arg))]
+      {:type t :opts allopts}
+      (let [available-cmds (->> (:cmds subspec) (remove :hidden) (map :name))
+            provided-opts (map name (keys allopts))
+            available-opts (map :name cmdopts)
+            unspecified-opts (set/difference (into #{} available-opts) (into #{} provided-opts))]
+        (if (or (str/starts-with? (last args) "-") (empty? available-cmds))
+          (map #(str "--" %) unspecified-opts)
+          (seq available-cmds))))))
