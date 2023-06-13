@@ -36,7 +36,7 @@
   (let [allopts (->> args (map :options) (apply merge))
         {:keys [command options arguments]} (-> args last (assoc :options allopts))]
     (case (rest command)
-      ["network" "create"] [:network-create (:name arguments) (:addresses arguments) options]
+      ["network" "add"] [:network-add (:name arguments) (:addresses arguments) options]
       ["network" "ls"] [:network-list options]
       ["network" "rm"] [:network-remove (:name arguments) options]
       ["network" "show"] [:network-show (:name arguments) options]
@@ -52,7 +52,7 @@
 
 (defn dispatch [args]
   (-> (case (first args)
-        :network-create cmd/network-create
+        :network-add cmd/network-add
         :network-list cmd/network-list
         :network-remove cmd/network-remove
         :network-show cmd/network-show

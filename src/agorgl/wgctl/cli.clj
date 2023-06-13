@@ -23,8 +23,8 @@
            :opts [{:name "help"
                    :desc "Show help summary"
                    :alias "h"}]
-           :cmds [{:name "create"
-                   :desc "Create network"
+           :cmds [{:name "add"
+                   :desc "Add network"
                    :args [{:name "name"}
                           {:name "addresses"}]}
                   {:name "ls"

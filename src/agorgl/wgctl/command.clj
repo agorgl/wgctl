@@ -48,7 +48,7 @@
     (r/network-save remote network)
     (r/config-save remote (:name network) config)))
 
-(defn network-create [name addresses {:keys [remote]}]
+(defn network-add [name addresses {:keys [remote]}]
   (if (not (r/network-exists remote name))
     (let [[private-key public-key] (wg/keypair)
           self-address (net/next-ip addresses)
