@@ -67,6 +67,69 @@
     (r/config-delete remote name)
     (r/network-delete remote name)))
 
+(defn indexed-by-key [x kw]
+  (cond
+    (sequential? x)
+    (if (and (seq x) (every? #(and (map? %) (kw %)) x))
+      (->> x
+           (map (fn [x]
+                  (->> x
+                       ((juxt #(keyword (kw %))
+                              #(indexed-by-key (dissoc % kw) kw))))))
+           (into {}))
+      x)
+    (map? x)
+    (->> x
+         (map (fn [[k v]]
+                [k (indexed-by-key v kw)]))
+         (into {}))
+    :else x))
+
+(defn indent-str [s indent]
+  (let [is (apply str (repeat indent " "))]
+    (->> (str/split s #"\n")
+         (map #(str is %))
+         (str/join "\n"))))
+
+(defn format-data [x]
+  (cond
+    (map? x)
+    (->> x
+         (remove (comp empty? second))
+         (map (fn [[k v]]
+                (str (name k) ": "
+                     (let [s (format-data v)]
+                       (if (coll? v)
+                         (str "\n" (indent-str s 2))
+                         s)))))
+         (str/join "\n"))
+    (sequential? x)
+    (->> x
+         (map format-data)
+         (remove empty?)
+         (map #(str "- " %))
+         (str/join "\n"))
+    :else x))
+
+(defn mask-private-keys [peer]
+  (->> peer
+       (map (fn [[k v]]
+              (if (= k :private-key)
+                [k "(hidden)"]
+                [k v])))
+       (into {})))
+
+(defn network-show [name {:keys [remote]}]
+  (let [network (load-network name remote)]
+    (-> [network]
+        (#(map (fn [network]
+                 (update-in network [:peers]
+                            (fn [peers]
+                              (map mask-private-keys peers)))) %))
+        (indexed-by-key :name)
+        format-data
+        println)))
+
 (defn next-network-address [network]
   (let [addresses (:addresses network)
         occupied (map :address (:peers network))]
@@ -115,6 +178,15 @@
     (-> network
         (d/remove-peer peer-name)
         (save-network remote))))
+
+(defn peer-show [name {:keys [remote network]}]
+  (let [network (load-network (pick-network network remote) remote)
+        peer (d/get-peer network name)]
+    (-> [peer]
+        (#(map mask-private-keys %))
+        (indexed-by-key :name)
+        format-data
+        println)))
 
 (defn route-add [addresses {:keys [remote network peer]}]
   (let [network (load-network (pick-network network remote) remote)

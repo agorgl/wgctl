@@ -39,11 +39,13 @@
       ["network" "create"] [:network-create (:name arguments) (:addresses arguments) options]
       ["network" "ls"] [:network-list options]
       ["network" "rm"] [:network-remove (:name arguments) options]
+      ["network" "show"] [:network-show (:name arguments) options]
       ["peer" "add"] [:peer-add (:name arguments) (:public-key arguments) options]
       ["peer" "get"] [:peer-get (:name arguments) (:property arguments) options]
       ["peer" "set"] [:peer-set (:name arguments) (:property arguments) (:value arguments) options]
       ["peer" "ls"] [:peer-list options]
       ["peer" "rm"] [:peer-remove (:name arguments) options]
+      ["peer" "show"] [:peer-show (:name arguments) options]
       ["route" "add"] [:route-add (:addresses arguments) options]
       ["route" "ls"] [:route-list options]
       ["route" "rm"] [:route-remove (:addresses arguments) options])))
@@ -53,11 +55,13 @@
         :network-create cmd/network-create
         :network-list cmd/network-list
         :network-remove cmd/network-remove
+        :network-show cmd/network-show
         :peer-add cmd/peer-add
         :peer-get cmd/peer-get
         :peer-set cmd/peer-set
         :peer-list cmd/peer-list
         :peer-remove cmd/peer-remove
+        :peer-show cmd/peer-show
         :route-add cmd/route-add
         :route-list cmd/route-list
         :route-remove cmd/route-remove)

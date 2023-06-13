@@ -32,6 +32,10 @@
                   {:name "rm"
                    :desc "Remove network"
                    :args [{:type :network
+                           :name "name"}]}
+                  {:name "show"
+                   :desc "Show network"
+                   :args [{:type :network
                            :name "name"}]}]}
           {:name "peer"
            :desc "Manage peers"
@@ -64,6 +68,10 @@
                    :desc "List peers"}
                   {:name "rm"
                    :desc "Remove peer"
+                   :args [{:type :peer
+                           :name "name"}]}
+                  {:name "show"
+                   :desc "Show peer"
                    :args [{:type :peer
                            :name "name"}]}]}
           {:name "route"

@@ -130,6 +130,15 @@
                       (:name network))]
       (throw (ex-info msg {})))))
 
+(defn get-peer [network peer-name]
+  (if-let [peer-index (find-peer network peer-name)]
+    (let [peer (get-in network [:peers peer-index])]
+      peer)
+    (let [msg (format "Peer with name '%s' does not exist in network %s"
+                      peer-name
+                      (:name network))]
+      (throw (ex-info msg {})))))
+
 (defn get-peer-prop [network peer-name property]
   (if-let [peer-index (find-peer network peer-name)]
     (let [peer (get-in network [:peers peer-index])]
