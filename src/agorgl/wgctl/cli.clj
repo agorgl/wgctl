@@ -36,7 +36,15 @@
                   {:name "show"
                    :desc "Show network"
                    :args [{:type :network
-                           :name "name"}]}]}
+                           :name "name"}]}
+                  {:name "import"
+                   :desc "Import network"
+                   :args [{:name "file"}]}
+                  {:name "export"
+                   :desc "Export network"
+                   :args [{:type :network
+                           :name "name"}
+                          {:name "file"}]}]}
           {:name "peer"
            :desc "Manage peers"
            :opts [{:type :network

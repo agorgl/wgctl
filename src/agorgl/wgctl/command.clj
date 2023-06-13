@@ -1,6 +1,7 @@
 (ns agorgl.wgctl.command
   (:require [clojure.string :as str]
             [clojure.java.io :as io]
+            [clojure.data.json :as json]
             [agorgl.wgctl.domain :as d]
             [agorgl.wgctl.network :as net]
             [agorgl.wgctl.wireguard :as wg]
@@ -129,6 +130,20 @@
         (indexed-by-key :name)
         format-data
         println)))
+
+(defn network-import [file {:keys [remote]}]
+  (let [data (slurp (if (= file "-") *in* file))
+        network (json/read-str data :key-fn keyword)
+        name (:name network)]
+    (if (not (r/network-exists remote name))
+      (save-network network remote)
+      (let [msg (format "Network with name '%s' already exists" name)]
+        (throw (ex-info msg {}))))))
+
+(defn network-export [name file {:keys [remote]}]
+  (let [network (load-network name remote)
+        data (json/write-str network :indent true :escape-slash false)]
+    (spit (if (= file "-") *out* file) data)))
 
 (defn next-network-address [network]
   (let [addresses (:addresses network)
