@@ -44,7 +44,19 @@
                    :desc "Export network"
                    :args [{:type :network
                            :name "name"}
-                          {:name "file"}]}]}
+                          {:name "file"}]}
+                  {:name "up"
+                   :desc "Enable network"
+                   :args [{:type :network
+                           :name "name"}]}
+                  {:name "down"
+                   :desc "Disable network"
+                   :args [{:type :network
+                           :name "name"}]}
+                  {:name "reload"
+                   :desc "Reload network"
+                   :args [{:type :network
+                           :name "name"}]}]}
           {:name "peer"
            :desc "Manage peers"
            :opts [{:type :network

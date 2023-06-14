@@ -145,6 +145,24 @@
         data (json/write-str network :indent true :escape-slash false)]
     (spit (if (= file "-") *out* file) data)))
 
+(defn network-up [name {:keys [remote]}]
+  (if (r/network-exists remote name)
+    (wg/up name remote)
+    (let [msg (format "Network with name '%s' does not exist" name)]
+      (throw (ex-info msg {})))))
+
+(defn network-down [name {:keys [remote]}]
+  (if (r/network-exists remote name)
+    (wg/down name remote)
+    (let [msg (format "Network with name '%s' does not exist" name)]
+      (throw (ex-info msg {})))))
+
+(defn network-reload [name {:keys [remote]}]
+  (if (r/network-exists remote name)
+    (wg/reload name remote)
+    (let [msg (format "Network with name '%s' does not exist" name)]
+      (throw (ex-info msg {})))))
+
 (defn next-network-address [network]
   (let [addresses (:addresses network)
         occupied (map :address (:peers network))]

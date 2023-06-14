@@ -42,6 +42,9 @@
       ["network" "show"] [:network-show (:name arguments) options]
       ["network" "import"] [:network-import (:file arguments) options]
       ["network" "export"] [:network-export (:name arguments) (:file arguments) options]
+      ["network" "up"] [:network-up (:name arguments) options]
+      ["network" "down"] [:network-down (:name arguments) options]
+      ["network" "reload"] [:network-reload (:name arguments) options]
       ["peer" "add"] [:peer-add (:name arguments) (:public-key arguments) options]
       ["peer" "get"] [:peer-get (:name arguments) (:property arguments) options]
       ["peer" "set"] [:peer-set (:name arguments) (:property arguments) (:value arguments) options]
@@ -60,6 +63,9 @@
         :network-show cmd/network-show
         :network-import cmd/network-import
         :network-export cmd/network-export
+        :network-up cmd/network-up
+        :network-down cmd/network-down
+        :network-reload cmd/network-reload
         :peer-add cmd/peer-add
         :peer-get cmd/peer-get
         :peer-set cmd/peer-set

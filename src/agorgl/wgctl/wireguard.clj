@@ -1,6 +1,7 @@
 (ns agorgl.wgctl.wireguard
   (:require [clojure.string :as str]
-            [clojure.java.shell :refer [sh]]))
+            [clojure.java.shell :refer [sh]]
+            [agorgl.wgctl.remote :refer [remote-command]]))
 
 (def interface-keys
   (array-map
@@ -54,3 +55,29 @@
   (let [private-key (str/trim-newline (:out (sh "wg" "genkey")))
         public-key (str/trim-newline (:out (sh "wg" "pubkey" :in private-key)))]
     [private-key public-key]))
+
+(defn execute [cmd host]
+  (if host
+    (remote-command host (str/join " " cmd) nil)
+    (apply sh cmd)))
+
+(defn wg-quick [args host]
+  (let [cmd (concat ["wg-quick"] args)
+        {:keys [exit out err]} (execute cmd host)]
+    (if (zero? exit)
+      (do
+        (when (seq err) (println err))
+        (when (seq out) (println out)))
+      (let [msg (format "Command '%s' failed with:\n%s" (str/join " " cmd) err)]
+        (throw (ex-info msg {}))))))
+
+(defn up [interface host]
+  (wg-quick ["up" interface] host))
+
+(defn down [interface host]
+  (wg-quick ["down" interface] host))
+
+(defn reload [interface host]
+  (when (zero? (:exit (execute ["ip" "link" "show" interface] host)))
+    (down interface host))
+  (up interface host))
