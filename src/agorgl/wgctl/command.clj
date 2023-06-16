@@ -11,6 +11,17 @@
 (defn address-cidr [address plen]
   (str address "/" (or plen 32)))
 
+(defn nat-commands [network]
+  (let [interface-name (:name network)
+        chain-prefix (str/replace interface-name #"\-" "_")]
+    {:pre-up ["nft add table inet wireguard"
+              (format "nft add chain inet wireguard %s_prerouting '{ type filter hook prerouting priority mangle; }'" chain-prefix)
+              (format "nft add chain inet wireguard %s_postrouting '{ type nat hook postrouting priority srcnat; }'" chain-prefix)
+              (format "nft add rule inet wireguard %s_prerouting iifname %%i meta mark set 0x7767 counter" chain-prefix)
+              (format "nft add rule inet wireguard %s_postrouting oifname != %%i mark 0x7767 counter masquerade" chain-prefix)]
+     :post-down [(format "nft delete chain inet wireguard %s_prerouting" chain-prefix)
+                 (format "nft delete chain inet wireguard %s_postrouting" chain-prefix)]}))
+
 (defn peer->interface-entry [network peer]
   (-> {:private-key (:private-key peer)
        :address (address-cidr (:address peer)
@@ -19,7 +30,9 @@
       (cond-> (some? (:endpoint peer))
         (assoc :listen-port (last (str/split (:endpoint peer) #":"))))
       (cond-> (:hub peer)
-        (assoc :post-up "sysctl -w net.ipv4.conf.%i.forwarding=1"))))
+        (assoc :post-up ["sysctl -w net.ipv4.conf.%i.forwarding=1"]))
+      (cond-> (:nat peer)
+        (#(merge-with concat % (nat-commands network))))))
 
 (defn peer->peer-entry [network peer]
   (-> {:name (:name peer)

@@ -42,6 +42,9 @@
 (s/def :peer/routes
   (s/coll-of :route/route))
 
+(s/def :peer/nat
+  boolean?)
+
 (def peer-properties
   #{:name
     :public-key
@@ -49,7 +52,8 @@
     :private-key
     :endpoint
     :hub
-    :routes})
+    :routes
+    :nat})
 
 (s/def :peer/peer
   (s/and
@@ -59,7 +63,8 @@
            :opt-un [:peer/private-key
                     :peer/endpoint
                     :peer/hub
-                    :peer/routes])
+                    :peer/routes
+                    :peer/nat])
    #(every? peer-properties (keys %))))
 
 (defn make-peer [name public-key address]
@@ -158,6 +163,7 @@
 (defn convert-prop [prop value]
   (let [f (case prop
             :hub convert-boolean
+            :nat convert-boolean
             identity)]
     (f value)))
 
