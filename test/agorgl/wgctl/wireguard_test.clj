@@ -14,7 +14,7 @@
               :allowed-ips "10.2.2.2/32"}
              {:name "peer2"
               :public-key "<pubkey2>"
-              :allowed-ips "10.2.2.3/32"}])
+              :allowed-ips ["10.2.2.3/32" "192.168.100.0/24"]}])
            (str/join "\n" ["[Interface]"
                            "PrivateKey = <privkey>"
                            "ListenPort = 51820"
@@ -28,4 +28,4 @@
                            "# peer2"
                            "[Peer]"
                            "PublicKey = <pubkey2>"
-                           "AllowedIPs = 10.2.2.3/32"])))))
+                           "AllowedIPs = 10.2.2.3/32, 192.168.100.0/24"])))))

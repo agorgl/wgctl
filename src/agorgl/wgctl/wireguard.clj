@@ -24,6 +24,16 @@
    :endpoint "Endpoint"
    :persistent-keepalive "PersistentKeepalive"))
 
+(defn coll-sep [k]
+  (cond
+    (#{:allowed-ips} k) ", "
+    (#{:pre-up :post-up :pre-down :post-down} k) "; "))
+
+(defn prop-value [k v]
+  (if (sequential? v)
+    (str/join (coll-sep k) v)
+    v))
+
 (defn ini-section [title props]
   (let [title-line (format "[%s]" title)
         prop-lines (map (fn [[k v]] (format "%s = %s" k v)) props)]
@@ -32,13 +42,13 @@
 
 (defn interface-section [props]
   (->> (select-keys props (keys interface-keys))
-       (map (fn [[k v]] [(k interface-keys) v]))
+       (map (fn [[k v]] [(k interface-keys) (prop-value k v)]))
        (into {})
        (ini-section "Interface")))
 
 (defn peer-section [props]
   (->> (select-keys props (keys peer-keys))
-       (map (fn [[k v]] [(k peer-keys) v]))
+       (map (fn [[k v]] [(k peer-keys) (prop-value k v)]))
        (into {})
        (ini-section "Peer")
        (str (format "# %s\n" (:name props)))))

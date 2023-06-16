@@ -24,12 +24,11 @@
 (defn peer->peer-entry [network peer]
   (-> {:name (:name peer)
        :public-key (:public-key peer)
-       :allowed-ips (str/join ", "
-                              (conj (some->> (:routes peer)
-                                             (map :addresses))
-                                    (if (:hub peer)
-                                      (:addresses network)
-                                      (address-cidr (:address peer) nil))))}
+       :allowed-ips (conj (some->> (:routes peer)
+                                   (map :addresses))
+                          (if (:hub peer)
+                            (:addresses network)
+                            (address-cidr (:address peer) nil)))}
       (cond-> (some? (:endpoint peer))
         (assoc :endpoint (:endpoint peer)))))
 
