@@ -43,7 +43,9 @@
                             (:addresses network)
                             (address-cidr (:address peer) nil)))}
       (cond-> (some? (:endpoint peer))
-        (assoc :endpoint (:endpoint peer)))))
+        (assoc :endpoint (:endpoint peer)))
+      (cond-> (> (or (:keepalive peer) 0) 0)
+        (assoc :persistent-keepalive (:keepalive peer)))))
 
 (defn network-config [network]
   (let [interface-entry (peer->interface-entry network (first (:peers network)))

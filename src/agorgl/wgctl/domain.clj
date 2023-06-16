@@ -45,6 +45,9 @@
 (s/def :peer/nat
   boolean?)
 
+(s/def :peer/keepalive
+  int?)
+
 (def peer-properties
   #{:name
     :public-key
@@ -53,7 +56,8 @@
     :endpoint
     :hub
     :routes
-    :nat})
+    :nat
+    :keepalive})
 
 (s/def :peer/peer
   (s/and
@@ -64,7 +68,8 @@
                     :peer/endpoint
                     :peer/hub
                     :peer/routes
-                    :peer/nat])
+                    :peer/nat
+                    :peer/keepalive])
    #(every? peer-properties (keys %))))
 
 (defn make-peer [name public-key address]
@@ -160,10 +165,18 @@
     (let [msg (format "Cannot convert value '%s' to boolean" value)]
       (throw (ex-info msg {})))))
 
+(defn convert-int [value]
+  (try
+    (Integer/parseInt value)
+    (catch Exception _
+      (let [msg (format "Cannot convert value '%s' to int" value)]
+        (throw (ex-info msg {}))))))
+
 (defn convert-prop [prop value]
   (let [f (case prop
             :hub convert-boolean
             :nat convert-boolean
+            :keepalive convert-int
             identity)]
     (f value)))
 
