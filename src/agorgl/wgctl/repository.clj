@@ -1,6 +1,7 @@
 (ns agorgl.wgctl.repository
   (:require [clojure.string :as str]
             [clojure.java.io :as io]
+            [clojure.java.shell :refer [sh]]
             [clojure.data.json :as json]
             [agorgl.wgctl.wireguard :as wg]
             [agorgl.wgctl.remote :refer [remote-command]]))
@@ -24,6 +25,9 @@
 
 (defn local-delete-file [file]
   (io/delete-file file))
+
+(defn local-change-permissions [file perms]
+  (sh "chmod" perms file))
 
 (defn remote-command-err [host err]
   (format "Remote command on host %s failed with: %s" host err))
@@ -67,6 +71,13 @@
       (let [msg (remote-command-err host err)]
         (throw (ex-info msg {}))))))
 
+(defn remote-change-permissions [host file perms]
+  (let [cmd (format "chmod %s %s" perms file)
+        {:keys [err]} (remote-command host cmd nil)]
+    (when-not (str/blank? err)
+      (let [msg (remote-command-err host err)]
+        (throw (ex-info msg {}))))))
+
 (defn list-files [host dir]
   (if (nil? host)
     (local-list-files dir)
@@ -91,6 +102,11 @@
   (if (nil? host)
     (local-delete-file file)
     (remote-delete-file host file)))
+
+(defn change-permissions [host file perms]
+  (if (nil? host)
+    (local-change-permissions file perms)
+    (remote-change-permissions host file perms)))
 
 (defn network-file [name]
   (str (wg/config-dir) "/" name ".json"))
@@ -117,7 +133,8 @@
   (let [name (:name network)
         file (network-file name)
         data (json/write-str network :indent true :escape-slash false)]
-    (write-file host file data)))
+    (write-file host file data)
+    (change-permissions host file wg/file-perms)))
 
 (defn network-delete [host name]
   (let [file (network-file name)]
@@ -125,7 +142,8 @@
 
 (defn config-save [host name config]
   (let [file (config-file name)]
-    (write-file host file config)))
+    (write-file host file config)
+    (change-permissions host file wg/file-perms)))
 
 (defn config-delete [host name]
   (let [file (config-file name)]

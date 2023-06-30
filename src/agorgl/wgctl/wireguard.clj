@@ -53,6 +53,8 @@
        (ini-section "Peer")
        (str (format "# %s\n" (:name props)))))
 
+(def file-perms "600")
+
 (defn config-dir []
   (or (System/getenv "WIREGUARD_DIR") "/etc/wireguard"))
 
