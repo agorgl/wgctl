@@ -48,21 +48,23 @@
           (future
             (let [out (:out streams)]
               (loop []
-                (let [ch (.read out)]
-                  (when (not= ch -1)
-                    (if (= ch 0)
+                (let [buf (byte-array 1024)
+                      nb (.read out buf)]
+                  (when (not= nb -1)
+                    (if (= (first buf) 0)
                       :ready
                       (do
-                        (.write *out* ch)
+                        (.write *out* (String. buf) 0 nb)
                         (.flush *out*)
                         (recur))))))))
           ferr
           (future
             (let [err (:err streams)]
               (loop []
-                (let [ch (.read err)]
-                  (when (not= ch -1)
-                    (.write *err* ch)
+                (let [buf (byte-array 1024)
+                      nb (.read err buf)]
+                  (when (not= nb -1)
+                    (.write *err* (String. buf) 0 nb)
                     (.flush *err*)
                     (recur))))))
           fin

@@ -9,6 +9,17 @@
     ]
   },
   {
+    "name": "java.io.InputStream",
+    "methods": [
+      {
+        "name": "read",
+        "parameterTypes": [
+          "byte[]"
+        ]
+      }
+    ]
+  },
+  {
     "name": "java.io.OutputStream",
     "methods": [
       {
@@ -26,6 +37,14 @@
         "parameterTypes": [
           "int"
         ]
+      },
+      {
+        "name": "write",
+        "parameterTypes": [
+          "java.lang.String",
+          "int",
+          "int"
+        ]
       }
     ]
   },
@@ -36,6 +55,14 @@
       {
         "name": "write",
         "parameterTypes": [
+          "int"
+        ]
+      },
+      {
+        "name": "write",
+        "parameterTypes": [
+          "java.lang.String",
+          "int",
           "int"
         ]
       },
