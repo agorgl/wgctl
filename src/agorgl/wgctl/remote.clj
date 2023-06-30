@@ -40,7 +40,7 @@
             (let [cmd (conj (remote-connect host)
                             (slurp (io/resource "remote-exec")))
                   proc (-> (PtyProcessBuilder. (into-array cmd))
-                           (.setConsole true)
+                           (.setConsole false)
                            (.start))]
               (.addShutdownHook (Runtime/getRuntime) (Thread. (fn [] (.destroy proc))))
               (reset! remote-shell-proc proc)))
@@ -95,6 +95,7 @@
         err (io/reader (:err streams))]
     (.write in payload)
     (.flush in)
+    (.readLine out) ; skip echo output
     (when (.ready err)
       (let [msg (str "Error while executing remote command:\n" (.readLine err))]
         (throw (ex-info msg {}))))
