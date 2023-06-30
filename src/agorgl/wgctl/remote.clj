@@ -25,13 +25,20 @@
    :out (.getInputStream proc)
    :err (.getErrorStream proc)})
 
+(defn remote-connect [host]
+  (if-let [remote-connect (System/getenv "WIREGUARD_REMOTE_CONNECT")]
+    (-> remote-connect
+        (str/replace #"\{\}" host)
+        (str/split #" "))
+    ["ssh" "-t" host]))
+
 (defn remote-shell [host]
   (when (nil? @remote-shell-proc)
     (enter-raw-mode)
     (let [proc
           (future
-            (let [cmd ["ssh" "-t" host
-                       (slurp (io/resource "remote-exec"))]
+            (let [cmd (conj (remote-connect host)
+                            (slurp (io/resource "remote-exec")))
                   proc (-> (PtyProcessBuilder. (into-array cmd))
                            (.setConsole true)
                            (.start))]
