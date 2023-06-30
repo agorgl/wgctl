@@ -3,6 +3,9 @@
     "includes": [
       {
         "pattern": "\\Qversion\\E"
+      },
+      {
+        "pattern": "\\Qremote-exec\\E"
       }
     ]
   },

@@ -31,13 +31,7 @@
     (let [proc
           (future
             (let [cmd ["ssh" "-t" host
-                       (format "sudo bash -c '%s'"
-                               (str "printf \"\\0\" ; "
-                                    "while read -r msg; do "
-                                    "cmd=$(jq -r '\\''.cmd'\\'' <<< \"$msg\"); in=$(jq -r '\\''.in'\\'' <<< \"$msg\"); "
-                                    "{ IFS= read -rd '\\'''\\'' err; IFS= read -rd '\\'''\\'' out; IFS= read -rd '\\'''\\'' exit; } < <({ out=$(bash -c \"$cmd\" <<< \"$in\"); } 2>&1; printf '\\''\\0%s'\\'' \"$out\" \"$?\"); "
-                                    "jq -n -c -M --arg exit \"$exit\" --arg out \"$out\" --arg err \"$err\" '\\''{\"exit\": $exit, \"out\": $out, \"err\": $err}'\\''; "
-                                    "done"))]
+                       (slurp (io/resource "remote-exec"))]
                   proc (-> (PtyProcessBuilder. (into-array cmd))
                            (.setConsole true)
                            (.start))]

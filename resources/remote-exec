@@ -1,0 +1,21 @@
+read -r -d '' EXEC_SCRIPT <<- EOM
+    printf "\0"
+    while read -r msg; do
+        cmd=\$(jq -r '.cmd' <<< "\$msg")
+        in=\$(jq -r '.in' <<< "\$msg")
+        {
+            IFS= read -rd '' err
+            IFS= read -rd '' out
+            IFS= read -rd '' exit
+        } < <({ out=\$(eval "\$cmd" <<< "\$in"); } 2>&1; printf '\0%s' "\$out" "\$?")
+        jq -n -c -M \
+            --arg exit "\$exit" \
+            --arg out "\$out" \
+            --arg err "\$err" \
+            '{"exit": \$exit, "out": \$out, "err": \$err}'
+    done
+EOM
+
+jq --version >/dev/null || exit 1
+[ "$(id -u)" -ne 0 ] && ELEVATE="sudo"
+$ELEVATE bash -c "$EXEC_SCRIPT"
