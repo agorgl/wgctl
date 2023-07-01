@@ -52,6 +52,12 @@
         peer-entries (map #(peer->peer-entry network %) (rest (:peers network)))]
     (wg/config-file (conj peer-entries interface-entry))))
 
+(defn peer-config [network peer]
+  (let [interface-entry (-> (peer->interface-entry network peer))
+        peer-entry (-> (peer->peer-entry network (first (:peers network)))
+                       (dissoc :name))]
+    (wg/config-file [interface-entry peer-entry])))
+
 (defn load-network [name remote]
   (if (r/network-exists remote name)
     (r/network-load remote name)
@@ -194,10 +200,15 @@
 (defn peer-add [peer-name public-key {:keys [remote network]}]
   (let [network (load-network (pick-network network remote) remote)
         address (next-network-address network)
-        peer (d/make-peer peer-name public-key address)]
+        keypair (when-not public-key (wg/keypair))
+        peer (d/make-peer peer-name (or public-key (second keypair)) address)]
     (-> network
         (d/add-peer peer)
-        (save-network remote))))
+        (save-network remote))
+    (when-not public-key
+      (->> (assoc peer :private-key (first keypair))
+           (peer-config network)
+           (println)))))
 
 (defn peer-properties []
   (let [properties (map name d/peer-properties)]

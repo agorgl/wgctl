@@ -70,7 +70,7 @@
            :cmds [{:name "add"
                    :desc "Add peer"
                    :args [{:name "name"}
-                          {:name "public-key"}]}
+                          {:name "public-key" :optional true}]}
                   {:name "get"
                    :desc "Get peer property"
                    :args [{:type :peer

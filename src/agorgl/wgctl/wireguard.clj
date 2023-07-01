@@ -51,7 +51,7 @@
        (map (fn [[k v]] [(k peer-keys) (prop-value k v)]))
        (into {})
        (ini-section "Peer")
-       (str (format "# %s\n" (:name props)))))
+       (str (when (:name props) (format "# %s\n" (:name props))))))
 
 (def file-perms "600")
 
