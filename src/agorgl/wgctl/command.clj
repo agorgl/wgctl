@@ -81,7 +81,8 @@
 
 (defn network-list [{:keys [remote]}]
   (let [network-names (r/network-list remote)]
-    (println (str/join "\n" network-names))))
+    (when (seq network-names)
+      (println (str/join "\n" network-names)))))
 
 (defn network-remove [name {:keys [remote]}]
   (when (r/network-exists remote name)
@@ -212,7 +213,8 @@
 
 (defn peer-properties []
   (let [properties (map name d/peer-properties)]
-    (println (str/join "\n" properties))))
+    (when (seq properties)
+      (println (str/join "\n" properties)))))
 
 (defn peer-get [peer-name property {:keys [remote network]}]
   (let [network (load-network (pick-network network remote) remote)
@@ -229,7 +231,8 @@
 (defn peer-list [{:keys [remote network]}]
   (let [network (load-network (pick-network network remote) remote)
         peer-names (d/list-peers network)]
-    (println (str/join "\n" peer-names))))
+    (when (seq peer-names)
+      (println (str/join "\n" peer-names)))))
 
 (defn peer-remove [peer-name {:keys [remote network]}]
   (let [network (load-network (pick-network network remote) remote)]
@@ -258,7 +261,8 @@
   (let [network (load-network (pick-network network remote) remote)
         peer-name peer
         route-addresses (d/list-routes network peer-name)]
-    (println (str/join "\n" route-addresses))))
+    (when (seq route-addresses)
+      (println (str/join "\n" route-addresses)))))
 
 (defn route-remove [addresses {:keys [remote network peer]}]
   (let [network (load-network (pick-network network remote) remote)
