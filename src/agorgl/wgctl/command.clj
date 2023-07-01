@@ -198,9 +198,9 @@
       (let [msg (format "Network was not specified")]
         (throw (ex-info msg {}))))))
 
-(defn peer-add [peer-name public-key {:keys [remote network]}]
+(defn peer-add [peer-name public-key {:keys [remote network address]}]
   (let [network (load-network (pick-network network remote) remote)
-        address (next-network-address network)
+        address (or address (next-network-address network))
         keypair (when-not public-key (wg/keypair))
         peer (d/make-peer peer-name (or public-key (second keypair)) address)]
     (-> network

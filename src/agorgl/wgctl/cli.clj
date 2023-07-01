@@ -69,6 +69,10 @@
                    :alias "h"}]
            :cmds [{:name "add"
                    :desc "Add peer"
+                   :opts [{:name "address"
+                           :refn "ADDRESS"
+                           :desc "Address to assign"
+                           :alias "a"}]
                    :args [{:name "name"}
                           {:name "public-key" :optional true}]}
                   {:name "get"
