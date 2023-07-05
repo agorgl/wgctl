@@ -11,6 +11,12 @@
 (defn address-cidr [address plen]
   (str address "/" (or plen 32)))
 
+(defn listen-commands [listen-port]
+  {:pre-up ["nft add table inet filter"
+            "nft add chain inet filter input '{ type filter hook input priority filter; policy drop; }'"
+            (format "nft add rule inet filter input udp dport %s counter accept" listen-port)]
+   :post-down [(format "nft delete rule inet filter input handle $(nft -an list chain inet filter input | awk '/udp dport %s/{print $NF}')" listen-port)]})
+
 (defn hub-commands []
   {:pre-up ["nft add table inet filter"
             "nft add chain inet filter forward '{ type filter hook forward priority filter; policy drop; }'"
@@ -36,7 +42,8 @@
                               (when (:hub peer)
                                 (net/plength (:addresses network))))}
       (cond-> (some? (:endpoint peer))
-        (assoc :listen-port (last (str/split (:endpoint peer) #":"))))
+        (-> (assoc :listen-port (last (str/split (:endpoint peer) #":")))
+            (#(merge-with concat % (listen-commands (:listen-port %))))))
       (cond-> (:hub peer)
         (#(merge-with concat % (hub-commands))))
       (cond-> (:nat peer)
