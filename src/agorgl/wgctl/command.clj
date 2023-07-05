@@ -121,7 +121,7 @@
   (cond
     (map? x)
     (->> x
-         (remove (comp empty? second))
+         (filter (comp #(or (not (seqable? %)) (seq %)) val))
          (map (fn [[k v]]
                 (str (name k) ": "
                      (let [s (format-data v)]
