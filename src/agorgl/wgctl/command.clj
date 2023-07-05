@@ -41,12 +41,13 @@
        :address (address-cidr (:address peer)
                               (when (:hub peer)
                                 (net/plength (:addresses network))))}
-      (cond-> (some? (:endpoint peer))
-        (-> (assoc :listen-port (last (str/split (:endpoint peer) #":")))
-            (#(merge-with concat % (listen-commands (:listen-port %))))))
-      (cond-> (:hub peer)
+      (cond-> (:endpoint peer)
+        (assoc :listen-port (last (str/split (:endpoint peer) #":"))))
+      (cond-> (and (:endpoint peer) (:autofw peer))
+        (#(merge-with concat % (listen-commands (:listen-port %)))))
+      (cond-> (and (:hub peer) (:autofw peer))
         (#(merge-with concat % (hub-commands))))
-      (cond-> (:nat peer)
+      (cond-> (and (:nat peer) (:autofw peer))
         (#(merge-with concat % (nat-commands (:name network)))))))
 
 (defn peer->peer-entry [network peer]

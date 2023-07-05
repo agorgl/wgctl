@@ -48,6 +48,9 @@
 (s/def :peer/keepalive
   int?)
 
+(s/def :peer/autofw
+  boolean?)
+
 (def peer-properties
   #{:name
     :public-key
@@ -57,7 +60,8 @@
     :hub
     :routes
     :nat
-    :keepalive})
+    :keepalive
+    :autofw})
 
 (s/def :peer/peer
   (s/and
@@ -69,7 +73,8 @@
                     :peer/hub
                     :peer/routes
                     :peer/nat
-                    :peer/keepalive])
+                    :peer/keepalive
+                    :peer/autofw])
    #(every? peer-properties (keys %))))
 
 (defn make-peer [name public-key address]
@@ -177,6 +182,7 @@
             :hub convert-boolean
             :nat convert-boolean
             :keepalive convert-int
+            :autofw convert-boolean
             identity)]
     (f value)))
 
