@@ -72,8 +72,12 @@
 (defn network-add [name addresses {:keys [remote]}]
   (if (not (r/network-exists remote name))
     (let [[private-key public-key] (wg/keypair)
-          self-address (net/next-ip addresses)
+          self-address (let [address (net/address addresses)]
+                         (if (= (net/network addresses) address)
+                           (net/next-ip addresses)
+                           address))
           self-peer (d/make-self-peer private-key public-key self-address)
+          addresses (net/block addresses)
           network (d/make-network name addresses self-peer)]
       (save-network network remote))
     (let [msg (format "Network with name '%s' already exists" name)]
