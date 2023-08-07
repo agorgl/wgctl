@@ -32,7 +32,8 @@
               (format "nft add chain inet wireguard %s_prerouting '{ type filter hook prerouting priority mangle; }'" chain-prefix)
               (format "nft add chain inet wireguard %s_postrouting '{ type nat hook postrouting priority srcnat; }'" chain-prefix)
               (format "nft add rule inet wireguard %s_prerouting iifname %%i meta mark set 0x7767 counter" chain-prefix)
-              (format "nft add rule inet wireguard %s_postrouting oifname != %%i mark 0x7767 counter masquerade" chain-prefix)]
+              (format "nft add rule inet wireguard %s_postrouting oifname != %%i mark 0x7767 counter masquerade" chain-prefix)
+              (format "nft add rule inet wireguard %s_postrouting oifname %%i counter masquerade" chain-prefix)]
      :post-down [(format "nft delete chain inet wireguard %s_prerouting" chain-prefix)
                  (format "nft delete chain inet wireguard %s_postrouting" chain-prefix)]}))
 
