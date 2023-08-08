@@ -11,31 +11,17 @@
 (defn address-cidr [address plen]
   (str address "/" (or plen 32)))
 
-(defn listen-commands [listen-port]
-  {:pre-up ["nft add table inet filter"
-            "nft add chain inet filter input '{ type filter hook input priority filter; policy drop; }'"
-            (format "nft add rule inet filter input udp dport %s counter accept" listen-port)]
-   :post-down [(format "nft delete rule inet filter input handle $(nft -an list chain inet filter input | awk '/udp dport %s/{print $NF}')" listen-port)]})
-
 (defn hub-commands []
-  {:pre-up ["nft add table inet filter"
-            "nft add chain inet filter forward '{ type filter hook forward priority filter; policy drop; }'"
-            "nft add rule inet filter forward iifname %i counter accept"
-            "nft add rule inet filter forward oifname %i counter accept"]
-   :post-up ["sysctl -w net.ipv4.conf.%i.forwarding=1"]
-   :post-down ["nft delete rule inet filter forward handle $(nft -an list chain inet filter forward | awk '/oifname \"%i\"/{print $NF}')"
-               "nft delete rule inet filter forward handle $(nft -an list chain inet filter forward | awk '/iifname \"%i\"/{print $NF}')"]})
+  {:post-up ["[[ $(sysctl -n net.ipv4.conf.%i.forwarding) == 0 ]] && sysctl -w net.ipv4.conf.%i.forwarding=1 || true"]})
 
-(defn nat-commands [interface-name]
-  (let [chain-prefix (str/replace interface-name #"\-" "_")]
-    {:pre-up ["nft add table inet wireguard"
-              (format "nft add chain inet wireguard %s_prerouting '{ type filter hook prerouting priority mangle; }'" chain-prefix)
-              (format "nft add chain inet wireguard %s_postrouting '{ type nat hook postrouting priority srcnat; }'" chain-prefix)
-              (format "nft add rule inet wireguard %s_prerouting iifname %%i meta mark set 0x7767 counter" chain-prefix)
-              (format "nft add rule inet wireguard %s_postrouting oifname != %%i mark 0x7767 counter masquerade" chain-prefix)
-              (format "nft add rule inet wireguard %s_postrouting oifname %%i counter masquerade" chain-prefix)]
-     :post-down [(format "nft delete chain inet wireguard %s_prerouting" chain-prefix)
-                 (format "nft delete chain inet wireguard %s_postrouting" chain-prefix)]}))
+(defn autofw-commands []
+  {:pre-up ["mkdir -p /etc/nftables.d/conf; for c in /etc/nftables.d/wireguard/%i-*.nft; do ln -f -s $c /etc/nftables.d/conf/$(basename $c); done"
+            "for c in /etc/nftables.{conf,nft}; do if [ -f $c ]; then nft -f $c; break; fi; done"]
+   :post-down ["for c in /etc/nftables.d/conf/%i-*.nft; do if [ -f $c ]; then rm $c; fi; done"
+               "for c in /etc/nftables.{conf,nft}; do if [ -f $c ]; then nft -f $c; break; fi; done"]})
+
+(defn endpoint-port [endpoint]
+  (last (str/split endpoint #":")))
 
 (defn peer->interface-entry [network peer]
   (-> {:private-key (:private-key peer)
@@ -43,13 +29,11 @@
                               (when (:hub peer)
                                 (net/plength (:addresses network))))}
       (cond-> (:endpoint peer)
-        (assoc :listen-port (last (str/split (:endpoint peer) #":"))))
-      (cond-> (and (:endpoint peer) (:autofw peer))
-        (#(merge-with concat % (listen-commands (:listen-port %)))))
-      (cond-> (and (:hub peer) (:autofw peer))
+        (assoc :listen-port (endpoint-port (:endpoint peer))))
+      (cond-> (:hub peer)
         (#(merge-with concat % (hub-commands))))
-      (cond-> (and (:nat peer) (:autofw peer))
-        (#(merge-with concat % (nat-commands (:name network)))))))
+      (cond-> (:autofw peer)
+        (#(merge-with concat % (autofw-commands))))))
 
 (defn peer->peer-entry [network peer]
   (-> {:name (:name peer)
@@ -82,9 +66,13 @@
       (throw (ex-info msg {})))))
 
 (defn save-network [network remote]
-  (let [config (network-config network)]
+  (let [config (network-config network)
+        {:keys [endpoint hub nat autofw]} (first (:peers network))]
     (r/network-save remote network)
-    (r/config-save remote (:name network) config)))
+    (r/config-save remote (:name network) config)
+    (when autofw
+      (r/firewall-delete remote (:name network))
+      (r/firewall-save remote (:name network) {:listen-port (endpoint-port endpoint) :hub hub :nat nat}))))
 
 (defn network-add [name addresses {:keys [remote]}]
   (if (not (r/network-exists remote name))
@@ -107,6 +95,7 @@
 
 (defn network-remove [name {:keys [remote]}]
   (when (r/network-exists remote name)
+    (r/firewall-delete remote name)
     (r/config-delete remote name)
     (r/network-delete remote name)))
 
