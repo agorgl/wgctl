@@ -1,6 +1,6 @@
 read -r -d '' EXEC_SCRIPT <<- EOM
     printf "\0"
-    while read -r msg; do
+    while read -r -t 10 msg; do
         cmd=\$(jq -r '.cmd' <<< "\$msg")
         in=\$(jq -r '.in' <<< "\$msg")
         {
